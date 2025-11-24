@@ -1,0 +1,143 @@
+name: Security Scan Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run weekly on Mondays at 9 AM UTC
+    - cron: '0 9 * * 1'
+
+jobs:
+  security_scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        pip install semgrep bandit openai anthropic requests
+    
+    - name: Run Semgrep
+      run: |
+        semgrep --config=auto --json --quiet . > semgrep_results.json || true
+    
+    - name: Run Bandit
+      run: |
+        bandit -r . -f json -o bandit_results.json -ll || true
+    
+    - name: Run Security Scanner with LLM
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        LLM_PROVIDER: ${{ secrets.LLM_PROVIDER || 'openai' }}
+      run: |
+        python scanner.py --target .
+      continue-on-error: true  # Don't fail build, just report
+    
+    - name: Upload Security Reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          reports/normalized_findings.json
+          reports/security_report.html
+          prompts/llm_prompts.txt
+        retention-days: 90
+    
+    - name: Comment PR with Summary
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          try {
+            const report = JSON.parse(fs.readFileSync('reports/normalized_findings.json', 'utf8'));
+            const summary = report.summary;
+            
+            const comment = `## 🔒 Security Scan Results
+            
+            | Severity | Count |
+            |----------|-------|
+            | 🔴 Critical | ${summary.CRITICAL || 0} |
+            | 🟠 High | ${summary.HIGH || 0} |
+            | 🟡 Medium | ${summary.MEDIUM || 0} |
+            | 🔵 Low | ${summary.LOW || 0} |
+            
+            **Total Findings:** ${report.total_findings}
+            
+            📊 [View Detailed Report](../actions/runs/${context.runId})
+            
+            ${summary.CRITICAL > 0 ? '⚠️ **Action Required:** Critical vulnerabilities detected!' : ''}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          } catch (error) {
+            console.log('Could not post comment:', error);
+          }
+    
+    - name: Fail on Critical Vulnerabilities
+      run: |
+        if [ -f reports/normalized_findings.json ]; then
+          CRITICAL=$(jq '.summary.CRITICAL // 0' reports/normalized_findings.json)
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "❌ Found $CRITICAL critical vulnerabilities!"
+            echo "Review the security report and fix before merging."
+            exit 1
+          fi
+        fi
+      shell: bash
+
+  # Optional: Separate job for local LLM (no API key needed)
+  security_scan_local:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'  # Only run on scheduled scans
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        pip install semgrep bandit requests
+    
+    - name: Install Ollama
+      run: |
+        curl -fsSL https://ollama.ai/install.sh | sh
+        ollama pull llama2
+    
+    - name: Start Ollama
+      run: |
+        ollama serve &
+        sleep 10
+    
+    - name: Run Security Scanner (Local LLM)
+      env:
+        LLM_PROVIDER: ollama
+      run: |
+        python scanner.py --target .
+    
+    - name: Upload Reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports-local-llm
+        path: reports/
+        retention-days: 30
