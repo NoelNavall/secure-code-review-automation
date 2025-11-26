@@ -1,4 +1,4 @@
-# 🎯 GPT-OSS-20B Quick Setup
+# GPT-OSS-20B Quick Setup
 
 **You specifically asked about using GPT-OSS-20B in LM Studio - here's your complete guide!**
 
@@ -32,7 +32,7 @@
 
 **In LM Studio:**
 
-1. Click the **🔍 Search** icon (left sidebar)
+1. Click the **Search** icon (left sidebar)
 2. Type: `gpt-oss-20b`
 3. Find: **TheBloke/gpt-oss-20b-GGUF**
 4. Download one of these (pick based on your RAM):
@@ -53,10 +53,10 @@ Click **Download** and wait for it to complete.
 
 **In LM Studio:**
 
-1. Click **💬 Local Server** (left sidebar)
+1. Click **Local Server** (left sidebar)
 2. In "Select a model" dropdown → Choose: `gpt-oss-20b-GGUF/gpt-oss-20b.Q4_K_M.gguf`
 3. Click **Start Server** (green button)
-4. Wait for "Server running on port 1234" ✅
+4. Wait for "Server running on port 1234" 
 
 **Server settings (optional adjustments):**
 - Context Length: 4096 (good for code)
@@ -86,7 +86,7 @@ python test_setup.py
 
 Should show:
 ```
-✅ LM Studio: RUNNING
+ LM Studio: RUNNING
    Loaded model: gpt-oss-20b.Q4_K_M.gguf
 ```
 
@@ -100,19 +100,19 @@ python scanner.py --target ./sample_app
 
 **Expected output:**
 ```
-🔍 Running Semgrep...
+    Running Semgrep...
    Found 15 findings
-🔍 Running Bandit...
+    Running Bandit...
    Found 18 findings
-📊 Total unique findings: 25
+    Total unique findings: 25
 
-🤖 Analyzing 25 findings with LLM (lmstudio)...
+    Analyzing 25 findings with LLM (lmstudio)...
    Analyzing 1/10: sql-injection
    [~20 seconds per finding with GPT-OSS-20B]
    Analyzing 2/10: command-injection
    ...
 
-✅ SCAN COMPLETE
+ SCAN COMPLETE
 ```
 
 ---
@@ -146,7 +146,7 @@ start reports/security_report.html
 | M1 | 30-40 sec | ~5-6 min |
 | CPU only (i7) | 50-70 sec | ~8-10 min |
 
-**Still way faster than manual code review!** ⚡
+**Still way faster than manual code review!** 
 
 ---
 
@@ -213,7 +213,7 @@ Expected: Clear, technical explanation about database attacks
 | DeepSeek Coder | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | 4 GB |
 | GPT-4o-mini (API) | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | N/A |
 
-**GPT-OSS-20B is the best free local model for this task!** ✅
+**GPT-OSS-20B is the best free local model for this task!** 
 
 ---
 
@@ -238,7 +238,7 @@ python scanner.py --target ./sample_app
 # 6. View report
 open reports/security_report.html
 
-# Done! 🎉
+# Done! �
 ```
 
 ---
@@ -304,13 +304,13 @@ Can reduce scan time by 30-40%!
 
 ## When to Use GPT-OSS-20B
 
-✅ **Use GPT-OSS-20B if:**
+ **Use GPT-OSS-20B if:**
 - You want high quality (close to GPT-4)
 - You have 16GB+ RAM
 - You want FREE
 - You value privacy
 
-❌ **Use OpenAI instead if:**
+ **Use OpenAI instead if:**
 - You have <16GB RAM
 - You want fastest speed
 - You don't mind $5 cost
@@ -332,7 +332,7 @@ Can reduce scan time by 30-40%!
 }
 ```
 
-**✅ Perfect for the assignment!**
+** Perfect for the assignment!**
 
 ---
 
