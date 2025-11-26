@@ -138,13 +138,6 @@ MEDIUM (Fix This Sprint):
 - Requires API key or local LLM setup
 - Best for Python/JavaScript projects
 
-## Grading Checklist
-
-- [x] CI integration (25%) - GitHub Actions workflow
-- [x] Triage accuracy (30%) - LLM prioritization with examples
-- [x] Developer guidance (25%) - HTML report with code snippets
-- [x] Documentation (10%) - This README
-- [x] LLM transparency (10%) - Prompt logging in prompts/
 
 ## Troubleshooting
 
@@ -168,5 +161,3 @@ MEDIUM (Fix This Sprint):
 4. **Cache results**: Save LLM responses to avoid duplicate API calls
 
 ## License
-
-MIT - Educational use only
