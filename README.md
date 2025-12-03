@@ -159,5 +159,3 @@ MEDIUM (Fix This Sprint):
 2. **Rotate keys**: Each member uses key for their testing phase
 3. **Use local LLM**: One person runs Ollama, shares reports
 4. **Cache results**: Save LLM responses to avoid duplicate API calls
-
-## License
