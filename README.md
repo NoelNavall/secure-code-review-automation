@@ -24,17 +24,7 @@ pip install openai anthropic requests
 
 ### 2. API Key Setup (For Group Sharing)
 
-**Option A: OpenAI (Recommended for groups)**
-```bash
-export OPENAI_API_KEY="sk-your-key-here"
-```
-
-**Option B: Anthropic Claude**
-```bash
-export ANTHROPIC_API_KEY="sk-ant-your-key-here"
-```
-
-**Option C: LM Studio (FREE - Easy GUI, any model)**
+**Option : LM Studio (FREE - Easy GUI, any model)**
 ```bash
 # 1. Download from https://lmstudio.ai/
 # 2. Load model (gpt-oss-20b, llama-3.1-8b, etc)
@@ -43,18 +33,6 @@ export LLM_PROVIDER="lmstudio"
 ```
 📖 **See [LMSTUDIO_GUIDE.md](LMSTUDIO_GUIDE.md) for detailed instructions**
 
-**Option D: Ollama (FREE - CLI for local models)**
-```bash
-# Install from https://ollama.ai/download
-ollama pull llama2
-ollama serve  # Keep running
-export LLM_PROVIDER="ollama"
-```
-
-**For Group Collaboration:**
-- Create a shared OpenAI account and split costs ($2-3/person)
-- OR use LM Studio - one person hosts, team connects remotely
-- OR everyone runs LM Studio locally (free but needs good hardware)
 
 ### 3. Run the Scanner
 
@@ -105,13 +83,6 @@ The pipeline runs automatically on every push:
 4. LLM analyzes findings
 5. Report is uploaded as artifact
 
-## Cost Estimates (LLM Usage)
-
-- **OpenAI GPT-4**: ~$0.10-0.50 per scan
-- **Anthropic Claude**: ~$0.08-0.40 per scan
-- **Ollama (local)**: Free (needs 8GB+ RAM)
-
-For a group project: Expect <$5 total for all testing.
 
 ## Output Example
 
@@ -141,9 +112,6 @@ MEDIUM (Fix This Sprint):
 
 ## Troubleshooting
 
-**"No API key found"**
-- Set environment variable: `export OPENAI_API_KEY="..."`
-- Or use local Ollama: `export LLM_PROVIDER="ollama"`
 
 **"Semgrep not found"**
 - Install: `pip install semgrep`
