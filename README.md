@@ -225,21 +225,7 @@ GitHub Actions workflow included for automatic scanning:
 # Configuration via repository secrets
 ```
 
-## Cost Estimation
 
-**LM Studio (Recommended):**
-- Cost: Free
-- Download: ~12 GB (one-time)
-- Electricity: ~$0.02 per scan
-- Project total: ~$0.50
-
-**OpenAI:**
-- Per scan: ~$0.20
-- Project total: ~$5-8
-
-**Anthropic:**
-- Per scan: ~$0.30
-- Project total: ~$6-10
 
 ## Troubleshooting
 
