@@ -13,7 +13,6 @@ The project implements a complete security scanning pipeline that:
 - Analyzes criticality using AI-powered assessment
 - Generates interactive HTML reports with filtering and pagination
 - Integrates with CI/CD pipelines (GitHub Actions)
-- Supports multiple LLM providers (OpenAI, Anthropic, LM Studio, Ollama)
 - Provides concrete remediation suggestions for identified vulnerabilities
 
 ## Legal/Ethical Warning
@@ -22,7 +21,7 @@ The project implements a complete security scanning pipeline that:
 
 - Use ONLY in isolated testing environments
 - NEVER run vulnerable example files in production
-- Source code in `sample_app/` contains deliberately insecure patterns
+- Source code in `sample/` contains deliberately insecure patterns
 - Project is designed for educational purposes in security testing
 - Follow responsible security practices during all testing
 
@@ -38,11 +37,8 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Configure LLM provider (choose one)
-export LLM_PROVIDER="lmstudio"  # Free, local
-# or
-export LLM_PROVIDER="openai"
-export OPENAI_API_KEY="your-api-key"
+# Configure LMStudio
+export LLM_PROVIDER="lmstudio"
 
 # Run scan
 python scanner.py --target ./sample_app
@@ -66,11 +62,10 @@ python view_reports.py --latest
 ```
 secure-code-review/
 ├── scanner.py                 # Main security scanning script
-├── test_setup.py             # Installation verification script
 ├── view_reports.py           # Report viewing and filtering tool
 ├── requirements.txt          # Python dependencies
 │
-├── sample_app/               # Vulnerable test files
+├── sample/               # Vulnerable test files
 │   ├── app.py               # Flask app with vulnerabilities
 │   └── utils.py             # Utility functions with vulnerabilities
 │
@@ -96,7 +91,6 @@ secure-code-review/
 
 **Code/**
 - `scanner.py` - Orchestrates Semgrep, Bandit, and LLM analysis
-- `test_setup.py` - Validates installation and configuration
 - `view_reports.py` - Command-line tool for report management
 
 **Docs/**
@@ -118,20 +112,15 @@ secure-code-review/
 - Bandit (Apache 2.0 License)
 
 **Python Libraries:**
-- openai (MIT License) - OpenAI API client
-- anthropic (MIT License) - Anthropic API client
 - requests (Apache 2.0) - HTTP requests
 - Flask (BSD License) - Web framework for test app
 
-**LLM Providers (optional):**
-- OpenAI GPT-4o-mini (commercial license)
-- Anthropic Claude Sonnet (commercial license)
-- LM Studio (free for local use)
-- Ollama (MIT License)
+**LLM Provider:**
+- LM Studio
 
 ### Project License
 
-This project is created for educational purposes as part of Assignment 18.
+This project is created for educational purposes as part of Ethical Hackin DI6005.
 
 **Usage Rights:**
 - Free use for academic purposes
@@ -186,7 +175,6 @@ See respective tool documentation for complete license terms:
 - Insecure Deserialization
 - Path Traversal
 - CSRF
-- And more...
 
 ## Usage Examples
 
@@ -257,6 +245,6 @@ GitHub Actions workflow included for automatic scanning:
 
 Developed as part of Assignment 18 - Secure Code Review with LLM Integration
 
-Course: Security Testing and Ethical Hacking
-Institution: [Your Institution]
+Course: Ethical Hacking DI6005
+Institution: Halmstad University
 Date: November 2025
