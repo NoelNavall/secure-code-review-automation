@@ -1,0 +1,211 @@
+{
+  "scan_id": "2025-12-31_16-54-15",
+  "timestamp": "2025-12-31T16:54:15.205985",
+  "total_findings": 10,
+  "summary": {
+    "CRITICAL": 5,
+    "HIGH": 5,
+    "MEDIUM": 0,
+    "LOW": 0
+  },
+  "findings": [
+    {
+      "tool": "bandit",
+      "severity": "CRITICAL",
+      "title": "hardcoded_sql_expressions",
+      "message": "Possible SQL injection vector through string-based query construction.",
+      "file": ".\\.\\sample\\app.py",
+      "line": 27,
+      "code": "26     cursor = conn.cursor()\n27     query = f\"SELECT * FROM users WHERE username='{username}' AND password='{password}'\"\n28     cursor.execute(query)  # BUG: Direct string interpolation\n",
+      "cwe": [
+        89
+      ],
+      "llm_analysis": {
+        "exploitability": "5",
+        "impact": "An attacker can inject arbitrary SQL, potentially retrieving all user data, modifying or deleting records, escalating privileges, and compromising the entire database. In a production environment this could lead to full system compromise.",
+        "false_positive": "LOW",
+        "remediation": "cursor.execute(\"SELECT * FROM users WHERE username=%s AND password=%s\", (username, password))",
+        "priority": "CRITICAL"
+      }
+    },
+    {
+      "tool": "bandit",
+      "severity": "CRITICAL",
+      "title": "subprocess_popen_with_shell_equals_true",
+      "message": "subprocess call with shell=True identified, security issue.",
+      "file": ".\\.\\sample\\app.py",
+      "line": 41,
+      "code": "40     # Vulnerable to command injection\n41     result = subprocess.check_output(f\"ping -c 1 {host}\", shell=True)  # BUG: shell=True with user input\n42     return result\n",
+      "cwe": [
+        78
+      ],
+      "llm_analysis": {
+        "exploitability": 5,
+        "impact": "An attacker can execute arbitrary shell commands on the host system, leading to full compromise of the affected machine.",
+        "false_positive": "LOW",
+        "remediation": "Use subprocess.check_output(['ping', '-c', '1', host]) without shell=True; validate or sanitize 'host' input before use.",
+        "priority": "CRITICAL"
+      }
+    },
+    {
+      "tool": "bandit",
+      "severity": "CRITICAL",
+      "title": "hardcoded_sql_expressions",
+      "message": "Possible SQL injection vector through string-based query construction.",
+      "file": ".\\.\\sample\\app.py",
+      "line": 89,
+      "code": "88     cursor = conn.cursor()\n89     cursor.execute(f\"DELETE FROM users WHERE id={user_id}\")\n90     conn.commit()\n",
+      "cwe": [
+        89
+      ],
+      "llm_analysis": {
+        "exploitability": "4",
+        "impact": "An attacker can delete arbitrary user records, leading to data loss, denial of service, and potential privilege escalation if the deleted accounts are privileged.",
+        "false_positive": "LOW",
+        "remediation": "cursor.execute(\"DELETE FROM users WHERE id=%s\", (user_id,))\nconn.commit()",
+        "priority": "CRITICAL"
+      }
+    },
+    {
+      "tool": "bandit",
+      "severity": "CRITICAL",
+      "title": "hardcoded_sql_expressions",
+      "message": "Possible SQL injection vector through string-based query construction.",
+      "file": ".\\.\\sample\\app.py",
+      "line": 126,
+      "code": "125     # Storing password in plaintext\n126     cursor.execute(f\"INSERT INTO users VALUES ('{username}', '{password}')\")  # BUG: No hashing\n127     conn.commit()\n",
+      "cwe": [
+        89
+      ],
+      "llm_analysis": {
+        "exploitability": "4",
+        "impact": "An attacker can inject arbitrary SQL commands via the username or password fields, potentially gaining full database access, exfiltrating sensitive data, modifying records, or deleting tables. This could lead to complete compromise of user accounts and application integrity.",
+        "false_positive": "LOW",
+        "remediation": "# Use parameterized queries\ncursor.execute(\"INSERT INTO users (username, password) VALUES (%s, %s)\", (username, hashed_password))\n# Hash the password before storing\nhashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()",
+        "priority": "CRITICAL"
+      }
+    },
+    {
+      "tool": "bandit",
+      "severity": "CRITICAL",
+      "title": "flask_debug_true",
+      "message": "A Flask app appears to be run with debug=True, which exposes the Werkzeug debugger and allows the execution of arbitrary code.",
+      "file": ".\\.\\sample\\app.py",
+      "line": 156,
+      "code": "155     # VULNERABILITY: Debug mode in production\n156     app.run(debug=True, host='0.0.0.0')  # BUG: debug=True exposes stack traces\n",
+      "cwe": [
+        94
+      ],
+      "llm_analysis": {
+        "exploitability": 5,
+        "impact": "Enabling Flask's debug mode in a production environment exposes the interactive Werkzeug debugger, allowing an attacker to execute arbitrary Python code on the server, read sensitive data, modify application state, or pivot to other systems. This can lead to full compromise of the host machine and any connected services.",
+        "false_positive": "LOW",
+        "remediation": "Change the run call to disable debug mode:\napp.run(debug=False, host='0.0.0.0')\n# Or remove the parameter entirely if using a production WSGI server.",
+        "priority": "CRITICAL"
+      }
+    },
+    {
+      "tool": "bandit",
+      "severity": "HIGH",
+      "title": "blacklist",
+      "message": "Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue.",
+      "file": ".\\.\\sample\\app.py",
+      "line": 68,
+      "code": "67     # Vulnerable to insecure deserialization\n68     obj = pickle.loads(data)  # BUG: Unpickling untrusted data\n69     return str(obj)\n",
+      "cwe": [
+        502
+      ],
+      "llm_analysis": {
+        "exploitability": 4,
+        "impact": "Arbitrary code execution on the server, allowing an attacker to run any Python code, exfiltrate data, or compromise the entire system.",
+        "false_positive": "LOW",
+        "remediation": [
+          "// Replace insecure pickle deserialization with a safe alternative",
+          "import json",
+          "obj = json.loads(data.decode('utf-8'))"
+        ],
+        "priority": "HIGH"
+      }
+    },
+    {
+      "tool": "bandit",
+      "severity": "HIGH",
+      "title": "hashlib",
+      "message": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "file": ".\\.\\sample\\app.py",
+      "line": 78,
+      "code": "77     # Vulnerable: Using MD5 for security\n78     hashed = hashlib.md5(data.encode()).hexdigest()  # BUG: MD5 is cryptographically broken\n79     return hashed\n",
+      "cwe": [
+        327
+      ],
+      "llm_analysis": {
+        "exploitability": 4,
+        "impact": "An attacker can precompute rainbow tables for MD5 and easily reverse the hash to obtain the original data (e.g., passwords, tokens). This leads to credential compromise, unauthorized access, and potential full system takeover.",
+        "false_positive": "LOW",
+        "remediation": "Replace MD5 with a stronger algorithm:\nhashed = hashlib.sha256(data.encode()).hexdigest()",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "tool": "bandit",
+      "severity": "HIGH",
+      "title": "request_without_timeout",
+      "message": "Call to requests without timeout",
+      "file": ".\\.\\sample\\app.py",
+      "line": 101,
+      "code": "100     # Vulnerable to SSRF\n101     response = requests.get(url)  # BUG: No URL validation\n102     return response.text\n",
+      "cwe": [
+        400
+      ],
+      "llm_analysis": {
+        "exploitability": 4,
+        "impact": "An attacker could trigger Server\u2011Side Request Forgery (SSRF) to reach internal services, exfiltrate sensitive data, or pivot into the network. The lack of a timeout also allows denial\u2011of\u2011service by hanging requests.",
+        "false_positive": "LOW",
+        "remediation": "Add URL validation and a timeout:\n```python\nresponse = requests.get(url, timeout=5)\n```\nEnsure `url` is whitelisted or parsed with `urllib.parse` to prevent internal access.",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "tool": "bandit",
+      "severity": "HIGH",
+      "title": "blacklist",
+      "message": "Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called",
+      "file": ".\\.\\sample\\app.py",
+      "line": 151,
+      "code": "150     # Vulnerable to XXE\n151     tree = ET.fromstring(xml_data)  # BUG: No XXE protection\n152     return tree.text\n",
+      "cwe": [
+        20
+      ],
+      "llm_analysis": {
+        "exploitability": 4,
+        "impact": "An attacker can exploit XML External Entity (XXE) attacks to read arbitrary files, cause denial of service, or trigger remote code execution if the XML parser processes external entities that invoke system commands.",
+        "false_positive": "LOW",
+        "remediation": [
+          "import defusedxml.ElementTree as ET",
+          "tree = ET.fromstring(xml_data)",
+          "// or alternatively: import defusedxml; defusedxml.defuse_stdlib(); tree = ET.fromstring(xml_data)"
+        ],
+        "priority": "HIGH"
+      }
+    },
+    {
+      "tool": "bandit",
+      "severity": "HIGH",
+      "title": "hardcoded_bind_all_interfaces",
+      "message": "Possible binding to all interfaces.",
+      "file": ".\\.\\sample\\app.py",
+      "line": 156,
+      "code": "155     # VULNERABILITY: Debug mode in production\n156     app.run(debug=True, host='0.0.0.0')  # BUG: debug=True exposes stack traces\n",
+      "cwe": [
+        605
+      ],
+      "llm_analysis": {
+        "exploitability": 4,
+        "impact": "Enabling debug mode while binding to all interfaces exposes detailed stack traces and internal application state to any external user, facilitating information disclosure, potential code execution via reflected attacks, and easier reconnaissance for further exploitation.",
+        "false_positive": "LOW",
+        "remediation": "app.run(debug=False, host='127.0.0.1')\n# or use environment variable to toggle debug in production\n# app.run(host=os.getenv('HOST', '127.0.0.1'))",
+        "priority": "HIGH"
+      }
+    }
+  ]
+}

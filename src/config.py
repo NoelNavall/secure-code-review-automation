@@ -1,29 +1,22 @@
 #!/usr/bin/env python3
-"""
-Configuration management for the security scanner
-"""
-
 import os
 
-# LLM Provider Configuration
-LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "openai")  # openai, anthropic, ollama, lmstudio
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+# You're using LM Studio
+LLM_PROVIDER = "lmstudio"
 
-# Severity Classification Keywords
+# What makes a bug CRITICAL
 CRITICAL_KEYWORDS = [
     "sql injection", "command injection", "code injection",
     "xxe", "deserialization", "path traversal", "rce"
 ]
 
+# What makes a bug HIGH severity
 HIGH_KEYWORDS = [
     "xss", "csrf", "authentication", "authorization",
     "hardcoded", "secret", "password", "crypto"
 ]
 
-# Report Settings
-ITEMS_PER_PAGE = 20
-CODE_CONTEXT_LINES = 4
-
-# Scanner Settings
-SCANNER_TIMEOUT = 300  # seconds
+# Report customization
+ITEMS_PER_PAGE = 20           # Vulnerabilities per page
+CODE_CONTEXT_LINES = 1        # Lines of code to show
+SCANNER_TIMEOUT = 60         # 5 minutes max

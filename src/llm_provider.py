@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
 """
-LLM provider integrations (OpenAI, Anthropic, Ollama, LM Studio)
+LLM provider integrations.
+This module handles calling different AI services (OpenAI, Anthropic, local models).
+Makes it easy to switch between providers without changing other code.
 """
 
-from config import OPENAI_API_KEY, ANTHROPIC_API_KEY, LLM_PROVIDER
+# Import config settings at the top level
+import config
 
 
 def call_openai(prompt: str) -> str:
-    """Call OpenAI API"""
+    """
+    Call OpenAI's GPT API.
+    Using gpt-4o-mini because it's cheaper and faster than GPT-4.
+    """
     try:
         import openai
-        openai.api_key = OPENAI_API_KEY
+        openai.api_key = config.OPENAI_API_KEY
         
         response = openai.chat.completions.create(
-            model="gpt-4o-mini",  # Cheaper and faster
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a senior security engineer reviewing code vulnerabilities. Provide concise, actionable remediation advice."},
                 {"role": "user", "content": prompt}
@@ -29,11 +35,14 @@ def call_openai(prompt: str) -> str:
 
 
 def call_anthropic(prompt: str) -> str:
-    """Call Anthropic Claude API"""
+    """
+    Call Anthropic's Claude API.
+    Claude is good at detailed analysis and following instructions.
+    """
     try:
         import anthropic
         
-        client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+        client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
         
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
@@ -50,7 +59,10 @@ def call_anthropic(prompt: str) -> str:
 
 
 def call_ollama(prompt: str) -> str:
-    """Call local Ollama LLM"""
+    """
+    Call local Ollama LLM.
+    Ollama runs models locally on your computer - free but slower.
+    """
     try:
         import requests
         
@@ -71,7 +83,10 @@ def call_ollama(prompt: str) -> str:
 
 
 def call_lmstudio(prompt: str) -> str:
-    """Call local LM Studio LLM"""
+    """
+    Call local LM Studio LLM.
+    LM Studio provides an OpenAI-compatible API for local models.
+    """
     try:
         import requests
         
@@ -96,7 +111,14 @@ def call_lmstudio(prompt: str) -> str:
 
 
 def call_llm(prompt: str) -> str:
-    """Route to appropriate LLM provider"""
+    """
+    Main function that routes to the correct LLM provider.
+    Checks LLM_PROVIDER setting and calls the right function.
+    """
+    # Get the provider setting
+    provider = config.LLM_PROVIDER.lower()
+    
+    # Map provider names to their functions
     providers = {
         "openai": call_openai,
         "anthropic": call_anthropic,
@@ -104,9 +126,9 @@ def call_llm(prompt: str) -> str:
         "lmstudio": call_lmstudio
     }
     
-    provider_func = providers.get(LLM_PROVIDER.lower())
+    provider_func = providers.get(provider)
     
     if not provider_func:
-        return f"Unknown LLM provider: {LLM_PROVIDER}"
+        return f"Unknown LLM provider: {config.LLM_PROVIDER}"
     
     return provider_func(prompt)

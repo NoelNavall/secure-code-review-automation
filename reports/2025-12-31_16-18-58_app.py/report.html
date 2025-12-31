@@ -1,68 +1,4 @@
-#!/usr/bin/env python3
-"""
-Report generation - JSON and HTML formats
-"""
-
-import json
-from datetime import datetime
-from typing import List, Dict
-
-
-def get_code_context(filepath: str, line_number: int, context_lines: int = 5) -> str:
-    """
-    Extract code context around a specific line with line numbers.
-    Shows context_lines before and after the vulnerable line.
-    """
-    try:
-        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
-            lines = f.readlines()
-        
-        # Calculate range (don't go below 1 or above file length)
-        start = max(0, line_number - context_lines - 1)
-        end = min(len(lines), line_number + context_lines)
-        
-        # Build formatted output with line numbers
-        result = []
-        for i in range(start, end):
-            line_num = i + 1
-            line_content = lines[i].rstrip()
-            
-            # Mark the vulnerable line
-            if line_num == line_number:
-                result.append(f"➤ {line_num:4d}  {line_content}  ← VULNERABLE LINE")
-            else:
-                result.append(f"  {line_num:4d}  {line_content}")
-        
-        return '\n'.join(result)
-    
-    except Exception as e:
-        # Fallback to original snippet if file can't be read
-        return f"Could not read file context: {str(e)}"
-
-
-def generate_json_report(findings: List[Dict], output_path: str):
-    """Generate normalized JSON report"""
-    report = {
-        "scan_id": datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
-        "timestamp": datetime.now().isoformat(),
-        "total_findings": len(findings),
-        "summary": {
-            "CRITICAL": sum(1 for f in findings if f['severity'] == 'CRITICAL'),
-            "HIGH": sum(1 for f in findings if f['severity'] == 'HIGH'),
-            "MEDIUM": sum(1 for f in findings if f['severity'] == 'MEDIUM'),
-            "LOW": sum(1 for f in findings if f['severity'] == 'LOW'),
-        },
-        "findings": findings
-    }
-    
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(report, f, indent=2)
-    
-    print(f"\nJSON report saved: {output_path}")
-def generate_html_report(findings: List[Dict], output_path: str):
-    """Generate developer-friendly HTML report"""
-    
-    html = """<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Security Scan Report</title>
@@ -356,75 +292,237 @@ def generate_html_report(findings: List[Dict], output_path: str):
 <body>
     <div class="header">
         <h1>Security Scan Report</h1>
-        <p>Generated: """ + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """</p>
+        <p>Generated: 2025-12-31 16:19:01</p>
     </div>
     
     <div class="summary">
         <div class="stat critical" onclick="toggleFilter('CRITICAL')">
-            <h3>""" + str(sum(1 for f in findings if f['severity'] == 'CRITICAL')) + """</h3>
+            <h3>3</h3>
             <p>Critical</p>
         </div>
         <div class="stat high" onclick="toggleFilter('HIGH')">
-            <h3>""" + str(sum(1 for f in findings if f['severity'] == 'HIGH')) + """</h3>
+            <h3>3</h3>
             <p>High</p>
         </div>
         <div class="stat medium" onclick="toggleFilter('MEDIUM')">
-            <h3>""" + str(sum(1 for f in findings if f['severity'] == 'MEDIUM')) + """</h3>
+            <h3>4</h3>
             <p>Medium</p>
         </div>
         <div class="stat low" onclick="toggleFilter('LOW')">
-            <h3>""" + str(sum(1 for f in findings if f['severity'] == 'LOW')) + """</h3>
+            <h3>0</h3>
             <p>Low</p>
         </div>
     </div>
- 
+    
+    <div class="filter-hint">
+        Click on severity boxes above to filter findings. Click multiple to combine filters. Click again to remove filter.
+    </div>
+    
     <div class="findings-container">
     <h2>Findings</h2>
-"""
-    
-    # Show ALL findings (pagination in JavaScript)
-    for idx, finding in enumerate(findings, 1):
-        llm = finding.get('llm_analysis', {})
-        
-        html += f"""
-    <div class="finding {finding['severity']}">
-        <h3>{idx}. {finding['title']}</h3>
-        <span class="severity {finding['severity']}">{finding['severity']}</span>
-        <p class="location">File: {finding['file']}:{finding['line']} | Tool: {finding['tool']}</p>
+
+    <div class="finding CRITICAL">
+        <h3>1. hardcoded_sql_expressions</h3>
+        <span class="severity CRITICAL">CRITICAL</span>
+        <p class="location">File: .\.\sample\app.py:27 | Tool: bandit</p>
         
         <h4>Description</h4>
-        <p>{finding['message']}</p>
+        <p>Possible SQL injection vector through string-based query construction.</p>
         
         <h4>Vulnerable Code</h4>
-        <code style="white-space: pre; font-family: 'Courier New', monospace; line-height: 1.5;">{get_code_context(finding['file'], finding['line'], context_lines=4)}</code>
-"""
+        <code style="white-space: pre; font-family: 'Courier New', monospace; line-height: 1.5;">    23  
+    24      # Vulnerable to SQL injection
+    25      conn = sqlite3.connect('users.db')
+    26      cursor = conn.cursor()
+➤   27      query = f"SELECT * FROM users WHERE username='{username}' AND password='{password}'"  ← VULNERABLE LINE
+    28      cursor.execute(query)  # BUG: Direct string interpolation
+    29      user = cursor.fetchone()
+    30  
+    31      if user:</code>
+    </div>
+
+    <div class="finding CRITICAL">
+        <h3>2. hardcoded_sql_expressions</h3>
+        <span class="severity CRITICAL">CRITICAL</span>
+        <p class="location">File: .\.\sample\app.py:89 | Tool: bandit</p>
         
-        if llm:
-            if llm.get('impact'):
-                html += f"""
-        <h4>Impact</h4>
-        <p>{llm.get('impact', 'N/A')}</p>
+        <h4>Description</h4>
+        <p>Possible SQL injection vector through string-based query construction.</p>
         
-        <h4>Exploitability</h4>
-        <p>{llm.get('exploitability', 'N/A')}/5</p>
-"""
-            
-            if llm.get('remediation'):
-                html += f"""
-        <div class="remediation">
-            <h4>Remediation</h4>
-            <p>{llm.get('remediation', 'See scanner documentation')}</p>
-        </div>
-"""
+        <h4>Vulnerable Code</h4>
+        <code style="white-space: pre; font-family: 'Courier New', monospace; line-height: 1.5;">    85  
+    86      # No authentication check!
+    87      conn = sqlite3.connect('users.db')
+    88      cursor = conn.cursor()
+➤   89      cursor.execute(f"DELETE FROM users WHERE id={user_id}")  ← VULNERABLE LINE
+    90      conn.commit()
+    91  
+    92      return "User deleted"
+    93  </code>
+    </div>
+
+    <div class="finding CRITICAL">
+        <h3>3. hardcoded_sql_expressions</h3>
+        <span class="severity CRITICAL">CRITICAL</span>
+        <p class="location">File: .\.\sample\app.py:126 | Tool: bandit</p>
         
-        html += "    </div>\n"
+        <h4>Description</h4>
+        <p>Possible SQL injection vector through string-based query construction.</p>
+        
+        <h4>Vulnerable Code</h4>
+        <code style="white-space: pre; font-family: 'Courier New', monospace; line-height: 1.5;">   122  
+   123      conn = sqlite3.connect('users.db')
+   124      cursor = conn.cursor()
+   125      # Storing password in plaintext
+➤  126      cursor.execute(f"INSERT INTO users VALUES ('{username}', '{password}')")  # BUG: No hashing  ← VULNERABLE LINE
+   127      conn.commit()
+   128  
+   129  # VULNERABILITY: Race Condition
+   130  user_balance = 1000</code>
+    </div>
+
+    <div class="finding HIGH">
+        <h3>4. subprocess_popen_with_shell_equals_true</h3>
+        <span class="severity HIGH">HIGH</span>
+        <p class="location">File: .\.\sample\app.py:41 | Tool: bandit</p>
+        
+        <h4>Description</h4>
+        <p>subprocess call with shell=True identified, security issue.</p>
+        
+        <h4>Vulnerable Code</h4>
+        <code style="white-space: pre; font-family: 'Courier New', monospace; line-height: 1.5;">    37  def ping():
+    38      host = request.args.get('host', 'localhost')
+    39  
+    40      # Vulnerable to command injection
+➤   41      result = subprocess.check_output(f"ping -c 1 {host}", shell=True)  # BUG: shell=True with user input  ← VULNERABLE LINE
+    42      return result
+    43  
+    44  # VULNERABILITY: Path Traversal
+    45  @app.route('/download', methods=['GET'])</code>
+    </div>
+
+    <div class="finding HIGH">
+        <h3>5. hashlib</h3>
+        <span class="severity HIGH">HIGH</span>
+        <p class="location">File: .\.\sample\app.py:78 | Tool: bandit</p>
+        
+        <h4>Description</h4>
+        <p>Use of weak MD5 hash for security. Consider usedforsecurity=False</p>
+        
+        <h4>Vulnerable Code</h4>
+        <code style="white-space: pre; font-family: 'Courier New', monospace; line-height: 1.5;">    74      import hashlib
+    75      data = request.form['data']
+    76  
+    77      # Vulnerable: Using MD5 for security
+➤   78      hashed = hashlib.md5(data.encode()).hexdigest()  # BUG: MD5 is cryptographically broken  ← VULNERABLE LINE
+    79      return hashed
+    80  
+    81  # VULNERABILITY: Missing Authentication
+    82  @app.route('/admin/delete_user', methods=['POST'])</code>
+    </div>
+
+    <div class="finding HIGH">
+        <h3>6. flask_debug_true</h3>
+        <span class="severity HIGH">HIGH</span>
+        <p class="location">File: .\.\sample\app.py:156 | Tool: bandit</p>
+        
+        <h4>Description</h4>
+        <p>A Flask app appears to be run with debug=True, which exposes the Werkzeug debugger and allows the execution of arbitrary code.</p>
+        
+        <h4>Vulnerable Code</h4>
+        <code style="white-space: pre; font-family: 'Courier New', monospace; line-height: 1.5;">   152      return tree.text
+   153  
+   154  if __name__ == '__main__':
+   155      # VULNERABILITY: Debug mode in production
+➤  156      app.run(debug=True, host='0.0.0.0')  # BUG: debug=True exposes stack traces  ← VULNERABLE LINE</code>
+    </div>
+
+    <div class="finding MEDIUM">
+        <h3>7. blacklist</h3>
+        <span class="severity MEDIUM">MEDIUM</span>
+        <p class="location">File: .\.\sample\app.py:68 | Tool: bandit</p>
+        
+        <h4>Description</h4>
+        <p>Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue.</p>
+        
+        <h4>Vulnerable Code</h4>
+        <code style="white-space: pre; font-family: 'Courier New', monospace; line-height: 1.5;">    64  def load_data():
+    65      data = request.data
+    66  
+    67      # Vulnerable to insecure deserialization
+➤   68      obj = pickle.loads(data)  # BUG: Unpickling untrusted data  ← VULNERABLE LINE
+    69      return str(obj)
+    70  
+    71  # VULNERABILITY: Weak Cryptography
+    72  @app.route('/encrypt', methods=['POST'])</code>
+    </div>
+
+    <div class="finding MEDIUM">
+        <h3>8. request_without_timeout</h3>
+        <span class="severity MEDIUM">MEDIUM</span>
+        <p class="location">File: .\.\sample\app.py:101 | Tool: bandit</p>
+        
+        <h4>Description</h4>
+        <p>Call to requests without timeout</p>
+        
+        <h4>Vulnerable Code</h4>
+        <code style="white-space: pre; font-family: 'Courier New', monospace; line-height: 1.5;">    97      import requests
+    98      url = request.args.get('url')
+    99  
+   100      # Vulnerable to SSRF
+➤  101      response = requests.get(url)  # BUG: No URL validation  ← VULNERABLE LINE
+   102      return response.text
+   103  
+   104  # VULNERABILITY: Information Disclosure
+   105  @app.route('/debug')</code>
+    </div>
+
+    <div class="finding MEDIUM">
+        <h3>9. blacklist</h3>
+        <span class="severity MEDIUM">MEDIUM</span>
+        <p class="location">File: .\.\sample\app.py:151 | Tool: bandit</p>
+        
+        <h4>Description</h4>
+        <p>Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called</p>
+        
+        <h4>Vulnerable Code</h4>
+        <code style="white-space: pre; font-family: 'Courier New', monospace; line-height: 1.5;">   147      import xml.etree.ElementTree as ET
+   148      xml_data = request.data
+   149  
+   150      # Vulnerable to XXE
+➤  151      tree = ET.fromstring(xml_data)  # BUG: No XXE protection  ← VULNERABLE LINE
+   152      return tree.text
+   153  
+   154  if __name__ == '__main__':
+   155      # VULNERABILITY: Debug mode in production</code>
+    </div>
+
+    <div class="finding MEDIUM">
+        <h3>10. hardcoded_bind_all_interfaces</h3>
+        <span class="severity MEDIUM">MEDIUM</span>
+        <p class="location">File: .\.\sample\app.py:156 | Tool: bandit</p>
+        
+        <h4>Description</h4>
+        <p>Possible binding to all interfaces.</p>
+        
+        <h4>Vulnerable Code</h4>
+        <code style="white-space: pre; font-family: 'Courier New', monospace; line-height: 1.5;">   152      return tree.text
+   153  
+   154  if __name__ == '__main__':
+   155      # VULNERABILITY: Debug mode in production
+➤  156      app.run(debug=True, host='0.0.0.0')  # BUG: debug=True exposes stack traces  ← VULNERABLE LINE</code>
+    </div>
+
+    </div><!-- End findings-container -->
     
-    html += """
+    <div style="margin-top: 30px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+        <h3>Important Notes</h3>
+        <ul>
+            <li>LLM-generated suggestions should be reviewed by a human security expert</li>
+            <li>False positives are possible - verify each finding in context</li>
+            <li>Use pagination controls above to navigate through findings (20 per page)</li>
+            <li>Always test remediation in a safe environment before production</li>
+        </ul>
+    </div>
 </body>
 </html>
-"""
-    
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(html)
-    
-    print(f"HTML report saved: {output_path}")
