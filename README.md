@@ -188,22 +188,6 @@ python scanner.py --target ./sample_app
 python scanner.py --target ./sample_app --skip-llm
 ```
 
-### Report Management
-
-```bash
-# List all scans
-python view_reports.py --list
-
-# Filter by severity
-python view_reports.py --filter-severity critical
-
-# Filter by target
-python view_reports.py --filter-target sample_app
-
-# Compare two scans
-python view_reports.py --compare SCAN1_ID SCAN2_ID
-```
-
 ### CI/CD Usage
 
 GitHub Actions workflow included for automatic scanning:
@@ -247,4 +231,5 @@ Developed as part of Assignment 18 - Secure Code Review with LLM Integration
 
 Course: Ethical Hacking DI6005
 Institution: Halmstad University
+
 Date: November 2025
