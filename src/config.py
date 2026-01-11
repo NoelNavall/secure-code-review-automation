@@ -19,4 +19,4 @@ HIGH_KEYWORDS = [
 # Report customization
 ITEMS_PER_PAGE = 20           # Vulnerabilities per page
 CODE_CONTEXT_LINES = 1        # Lines of code to show
-SCANNER_TIMEOUT = 60         # 5 minutes max
+SCANNER_TIMEOUT =  60        # 5 minutes max

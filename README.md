@@ -1,235 +1,152 @@
 # Security Scanner - Assignment 18
 
-## Project Name and Brief Purpose
+A Python tool that scans code for security vulnerabilities using Semgrep, Bandit, and LM Studio.
 
-**Project:** Automated Secure Code Review with LLM Integration
+---
 
-**Purpose:** This system combines static analysis tools (Semgrep and Bandit) with Large Language Models (LLM) to automatically identify, prioritize, and provide remediation guidance for security vulnerabilities in Python applications.
+## What It Does
 
-## Scope - What the Project Covers
+Scans Python files for security bugs like:
+- SQL injection
+- Command injection  
+- Hardcoded passwords
+- XSS vulnerabilities
+- Weak cryptography
 
-The project implements a complete security scanning pipeline that:
-- Scans Python code for security vulnerabilities
-- Analyzes criticality using AI-powered assessment
-- Generates interactive HTML reports with filtering and pagination
-- Integrates with CI/CD pipelines (GitHub Actions)
-- Provides concrete remediation suggestions for identified vulnerabilities
+Then uses a local AI (LM Studio) to explain each bug and how to fix it.
 
-## Legal/Ethical Warning
+---
 
-**IMPORTANT:** This project contains intentionally vulnerable code examples for testing purposes only.
+## Project Structure
 
-- Use ONLY in isolated testing environments
-- NEVER run vulnerable example files in production
-- Source code in `sample/` contains deliberately insecure patterns
-- Project is designed for educational purposes in security testing
-- Follow responsible security practices during all testing
+```
+secure-code-review-automation/
+│
+├── src/                        # Scanner code
+│   ├── scanner.py              # Main file - runs everything
+│   ├── scanners.py             # Semgrep & Bandit integration
+│   ├── config.py               # Settings
+│   ├── llm_provider.py         # LM Studio connection
+│   ├── triage.py               # AI bug analysis
+│   └── report_generator.py     # Creates HTML report
+│
+├── sample/                     # Test files with bugs
+│   ├── app.py                  # Vulnerable Flask app
+│   └── utils.py                # More buggy code
+│
+├── reports/                    # Scan results (auto-generated)
+│   └── [date]_[time]_[file]/
+│       ├── report.html         # Open this in browser
+│       ├── findings.json       # Raw data
+│       └── llm_prompts.txt     # AI conversation log
+│
+├── requirements.txt            # Dependencies
+└── README.md                   # This file
+```
 
-## Quick Start
+---
 
-### Basic Setup
+## Setup
 
+### 1. Install Python packages:
 ```bash
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Configure LMStudio
-export LLM_PROVIDER="lmstudio"
-
-# Run scan
-python scanner.py --target ./sample_app
 ```
 
-### View Results
+### 2. Make sure LM Studio is running:
+- Open LM Studio
+- Load a model (like ChatGPT or Llama)
+- Start the server on port 1234
 
+### 3. Run a scan:
 ```bash
-# Open HTML report
-open reports/YYYY-MM-DD_HH-MM-SS_sample_app/report.html
-
-# List all scans
-python view_reports.py --list
-
-# View latest scan
-python view_reports.py --latest
+python src/scanner.py --target sample/app.py
 ```
 
-## Brief Description of File Structure
+### 4. Open the report:
+- Go to `reports/` folder
+- Open the newest folder
+- Open `report.html` in your browser
 
-```
-secure-code-review/
-├── scanner.py                 # Main security scanning script
-├── view_reports.py           # Report viewing and filtering tool
-├── requirements.txt          # Python dependencies
-│
-├── sample/               # Vulnerable test files
-│   ├── app.py               # Flask app with vulnerabilities
-│   └── utils.py             # Utility functions with vulnerabilities
-│
-├── reports/                  # Generated scan results
-│   └── YYYY-MM-DD_HH-MM-SS_target/
-│       ├── report.html      # Interactive HTML report
-│       ├── findings.json    # Raw JSON data
-│       └── llm_prompts.txt  # LLM interaction log
-│
-├── .github/workflows/
-│   └── security_scan.yml    # CI/CD pipeline configuration
-│
-├── docs/                    # Documentation
-│   ├── writeup.md          # Lab report (background, methodology, results)
-│   ├── SETUP_GUIDE.md      # Detailed installation guide
-│   ├── REMEDIATION_GUIDE.md # Vulnerability remediation guidance
-│   └── ...                 # Additional technical documentation
-│
-└── README.md               # This file
-```
+---
 
-### Key Components
+## Usage
 
-**Code/**
-- `scanner.py` - Orchestrates Semgrep, Bandit, and LLM analysis
-- `view_reports.py` - Command-line tool for report management
-
-**Docs/**
-- `writeup.md` - Complete lab report with background, theory, methodology, and results
-- `SETUP_GUIDE.md` - Installation instructions
-- `REMEDIATION_GUIDE.md` - Fix patterns for common vulnerabilities
-
-**Prompts/**
-- Generated automatically during execution
-- Contains all LLM prompts and responses for transparency
-
-## Software/License Information
-
-### Dependencies
-
-**Core Tools:**
-- Python 3.8+
-- Semgrep (Apache 2.0 License)
-- Bandit (Apache 2.0 License)
-
-**Python Libraries:**
-- requests (Apache 2.0) - HTTP requests
-- Flask (BSD License) - Web framework for test app
-
-**LLM Provider:**
-- LM Studio
-
-### Project License
-
-This project is created for educational purposes as part of Ethical Hackin DI6005.
-
-**Usage Rights:**
-- Free use for academic purposes
-- Modification and distribution permitted for education
-- Commercial use requires separate agreement
-
-**Disclaimer:**
-- Software provided "as is" without warranties
-- Developer not responsible for damages from use
-- User responsible for safe handling of vulnerable test files
-
-### Third-Party Licenses
-
-See respective tool documentation for complete license terms:
-- Semgrep: https://github.com/returntocorp/semgrep/blob/develop/LICENSE
-- Bandit: https://github.com/PyCQA/bandit/blob/main/LICENSE
-
-## Functionality
-
-### Core Features
-
-**1. Automatic Vulnerability Detection**
-- Combines Semgrep and Bandit for comprehensive analysis
-- Identifies SQL injection, command injection, XSS, etc.
-- Normalizes results from both tools
-
-**2. LLM-Driven Prioritization**
-- Analyzes exploitability (scale 1-5)
-- Assesses impact and consequences
-- Identifies false positives
-- Generates specific remediation suggestions
-
-**3. Interactive Reports**
-- Clickable filtering by severity
-- Pagination (20 findings per page)
-- Code context with line numbers
-- Highlighted vulnerable lines
-
-**4. CI/CD Integration**
-- GitHub Actions workflow
-- Automatic scanning on push/pull request
-- Weekly scheduled scans
-- Fails on critical vulnerabilities
-
-### Supported Vulnerability Types
-
-- SQL Injection
-- Command Injection
-- Cross-Site Scripting (XSS)
-- Hardcoded Secrets
-- Weak Cryptography
-- Insecure Deserialization
-- Path Traversal
-- CSRF
-
-## Usage Examples
-
-### Basic Scanning
-
+### Scan a single file:
 ```bash
-# Scan an application
-python scanner.py --target ./sample_app
-
-# Skip LLM analysis (faster)
-python scanner.py --target ./sample_app --skip-llm
+python src/scanner.py --target sample/app.py
 ```
 
-### CI/CD Usage
-
-GitHub Actions workflow included for automatic scanning:
-
-```yaml
-# .github/workflows/security_scan.yml already included
-# Configuration via repository secrets
+### Scan a whole folder:
+```bash
+python src/scanner.py --target sample
 ```
 
+### Skip AI analysis (faster):
+```bash
+python src/scanner.py --target sample/app.py --skip-llm
+```
 
+---
 
-## Troubleshooting
+## How It Works
 
-**Problem: Semgrep not found (Windows)**
-- Solution: Use WSL2 for better compatibility
-- Alternative: `pipx install semgrep`
+1. **Semgrep & Bandit** scan the code for security issues
+2. **Scanner** combines the results
+3. **LM Studio** analyzes each bug (how bad it is, how to fix it)
+4. **Report** is generated as HTML
 
-**Problem: LM Studio connection failed**
-- Verify server is running (green indicator)
-- Check URL: `curl http://localhost:1234/v1/models`
+---
 
-**Problem: No findings**
-- Verify scanning vulnerable example files
-- Confirm Semgrep/Bandit are installed
+## Requirements
 
-## Support and Documentation
+- Python 3.8 or newer
+- Semgrep
+- Bandit
+- LM Studio (running locally)
+- Other packages in requirements.txt
 
-**Complete documentation:**
-- See `docs/writeup.md` for lab report
-- See `SETUP_GUIDE.md` for detailed installation
-- See `REMEDIATION_GUIDE.md` for fix guidance
+---
 
-**If issues arise:**
-1. Run `python test_setup.py` for diagnostics
-2. Check `llm_prompts.txt` for LLM interactions
-3. Review error messages in terminal
+## Example Output
 
-## Author
+```
+============================================================
+SECURE CODE REVIEW AUTOMATION
+============================================================
+[1/4] Running static analysis tools...
+Running Semgrep...
+   Found 0 Semgrep findings
+Running Bandit...
+   Found 10 Bandit findings
 
-Developed as part of Assignment 18 - Secure Code Review with LLM Integration
+[2/4] Normalizing findings...
+Total unique findings: 10
 
-Course: Ethical Hacking DI6005
-Institution: Halmstad University
+[3/4] Preparing output directory...
 
-Date: November 2025
+[4/4] Analyzing with LLM...
+Analyzing 10 findings with LLM (lmstudio)...
+   Analyzing 1/10: hardcoded_sql_expressions
+   Analyzing 2/10: hardcoded_password_string
+   ...
+
+============================================================
+SCAN COMPLETE
+============================================================
+Summary:
+   CRITICAL: 3
+   HIGH:     5
+   MEDIUM:   2
+   LOW:      0
+
+Reports saved to: reports/2025-12-31_15-30-00_app.py/
+```
+
+---
+
+## Tools Used
+
+- **Semgrep** - https://semgrep.dev/
+- **Bandit** - https://github.com/PyCQA/bandit
+- **LM Studio** - https://lmstudio.ai/

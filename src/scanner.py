@@ -56,12 +56,12 @@ def main():
         print("   Please provide a valid file or directory path")
         sys.exit(1)
     
-    # STEP 1: Run the scanners
+    # Run the scanners
     print("\n[1/4] Running static analysis tools...")
     semgrep_findings = run_semgrep(args.target)
     bandit_findings = run_bandit(args.target)
     
-    # STEP 2: Combine and deduplicate findings
+    # Combine and deduplicate findings
     print("\n[2/4] Normalizing findings...")
     findings = normalize_findings(semgrep_findings, bandit_findings)
     print(f"Total unique findings: {len(findings)}")
@@ -71,7 +71,7 @@ def main():
         print("\n✓ No security issues found!")
         return
     
-    # STEP 3: Create output folder with timestamp
+    # Create output folder with timestamp
     # Format: reports/2025-12-31_14-30-00_app.py/
     print("\n[3/4] Preparing output directory...")
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -87,14 +87,14 @@ def main():
     json_filename = f"{scan_folder}/findings.json"
     html_filename = f"{scan_folder}/report.html"
     
-    # STEP 4: LLM triage (optional)
+    # LLM triage (optional)
     if not args.skip_llm:
         print("\n[4/4] Analyzing with LLM...")
         findings = triage_findings(findings, prompts_filename)
     else:
         print("\n[4/4] Skipping LLM analysis (--skip-llm flag)")
     
-    # STEP 5: Generate reports
+    # Generate reports
     print("\nGenerating reports...")
     generate_json_report(findings, json_filename)
     generate_html_report(findings, html_filename)
@@ -112,8 +112,6 @@ def main():
     print(f"   View report: {html_filename}")
     print(f"\nTo view the report, open it in your browser:")
     print(f"   Windows: start {html_filename}")
-    print(f"   Mac:     open {html_filename}")
-    print(f"   Linux:   xdg-open {html_filename}")
 
 
 if __name__ == "__main__":

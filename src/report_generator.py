@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Report generation - JSON and HTML formats
+Report generation - creates HTML and JSON reports from scan results
 """
 
 import json
@@ -10,18 +10,17 @@ from typing import List, Dict
 
 def get_code_context(filepath: str, line_number: int, context_lines: int = 5) -> str:
     """
-    Extract code context around a specific line with line numbers.
-    Shows context_lines before and after the vulnerable line.
+    Get code around the vulnerable line so you can see what's happening
     """
     try:
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             lines = f.readlines()
         
-        # Calculate range (don't go below 1 or above file length)
+        # Don't go below line 1 or above last line
         start = max(0, line_number - context_lines - 1)
         end = min(len(lines), line_number + context_lines)
         
-        # Build formatted output with line numbers
+        # Build output with line numbers
         result = []
         for i in range(start, end):
             line_num = i + 1
@@ -29,22 +28,22 @@ def get_code_context(filepath: str, line_number: int, context_lines: int = 5) ->
             
             # Mark the vulnerable line
             if line_num == line_number:
-                result.append(f"➤ {line_num:4d}  {line_content}  ← VULNERABLE LINE")
+                result.append(f">>> {line_num:4d}  {line_content}  ← BUG HERE")
             else:
-                result.append(f"  {line_num:4d}  {line_content}")
+                result.append(f"    {line_num:4d}  {line_content}")
         
         return '\n'.join(result)
     
     except Exception as e:
-        # Fallback to original snippet if file can't be read
-        return f"Could not read file context: {str(e)}"
+        return f"Couldn't read file: {str(e)}"
 
 
 def generate_json_report(findings: List[Dict], output_path: str):
-    """Generate normalized JSON report"""
+    """
+    Save findings as JSON for processing later
+    """
     report = {
-        "scan_id": datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
-        "timestamp": datetime.now().isoformat(),
+        "scan_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "total_findings": len(findings),
         "summary": {
             "CRITICAL": sum(1 for f in findings if f['severity'] == 'CRITICAL'),
@@ -59,298 +58,229 @@ def generate_json_report(findings: List[Dict], output_path: str):
         json.dump(report, f, indent=2)
     
     print(f"\nJSON report saved: {output_path}")
+
+
 def generate_html_report(findings: List[Dict], output_path: str):
-    """Generate developer-friendly HTML report"""
+    """
+    Generate simple HTML report that you can open in a browser
+    """
     
+    # Basic HTML with simple styling
     html = """<!DOCTYPE html>
 <html>
 <head>
     <title>Security Scan Report</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-        .header { background: #2c3e50; color: white; padding: 20px; border-radius: 5px; }
-        .summary { display: flex; gap: 15px; margin: 20px 0; }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f0f0f0; 
+        }
+        .header { 
+            background: #333; 
+            color: white; 
+            padding: 20px; 
+            border-radius: 5px; 
+        }
+        .summary { 
+            display: flex; 
+            gap: 10px; 
+            margin: 20px 0; 
+        }
         .stat { 
             background: white; 
             padding: 15px; 
             border-radius: 5px; 
             flex: 1; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
         }
         .stat:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+            background: #e0e0e0; 
         }
         .stat.active { 
-            box-shadow: 0 0 0 3px #3498db;
-            transform: scale(1.05);
+            border: 2px solid #0066cc;
+            background: #e6f2ff;
         }
-        .stat.critical { border-left: 4px solid #e74c3c; }
-        .stat.high { border-left: 4px solid #e67e22; }
-        .stat.medium { border-left: 4px solid #f39c12; }
-        .stat.low { border-left: 4px solid #3498db; }
-        .stat.critical.active { border-left: 4px solid #e74c3c; background: #fee; }
-        .stat.high.active { border-left: 4px solid #e67e22; background: #fef3e6; }
-        .stat.medium.active { border-left: 4px solid #f39c12; background: #fef9e6; }
-        .stat.low.active { border-left: 4px solid #3498db; background: #e6f3fe; }
-        .finding { background: white; padding: 20px; margin: 15px 0; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.3s ease; }
-        .finding.hidden { display: none; }
-        .finding.CRITICAL { border-left: 5px solid #e74c3c; }
-        .finding.HIGH { border-left: 5px solid #e67e22; }
-        .finding.MEDIUM { border-left: 5px solid #f39c12; }
-        .finding.LOW { border-left: 5px solid #3498db; }
-        .severity { display: inline-block; padding: 5px 10px; border-radius: 3px; font-weight: bold; color: white; }
-        .severity.CRITICAL { background: #e74c3c; }
-        .severity.HIGH { background: #e67e22; }
-        .severity.MEDIUM { background: #f39c12; }
-        .severity.LOW { background: #3498db; }
-        code { 
-            background: #2d2d2d; 
-            color: #f8f8f2; 
+        .stat.critical { border-left: 5px solid #d32f2f; }
+        .stat.high { border-left: 5px solid #f57c00; }
+        .stat.medium { border-left: 5px solid #fbc02d; }
+        .stat.low { border-left: 5px solid #388e3c; }
+        
+        .finding { 
+            background: white; 
             padding: 15px; 
-            display: block; 
+            margin: 15px 0; 
             border-radius: 5px; 
-            overflow-x: auto; 
-            margin: 10px 0; 
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.6;
         }
-        .remediation { background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; border-radius: 3px; margin: 10px 0; }
-        .location { color: #7f8c8d; font-size: 0.9em; }
-        .filter-hint { 
-            text-align: center; 
-            color: #7f8c8d; 
+        .finding.hidden { 
+            display: none; 
+        }
+        .finding.CRITICAL { border-left: 5px solid #d32f2f; }
+        .finding.HIGH { border-left: 5px solid #f57c00; }
+        .finding.MEDIUM { border-left: 5px solid #fbc02d; }
+        .finding.LOW { border-left: 5px solid #388e3c; }
+        
+        .severity { 
+            display: inline-block; 
+            padding: 5px 10px; 
+            border-radius: 3px; 
+            color: white; 
+            font-weight: bold;
+        }
+        .severity.CRITICAL { background: #d32f2f; }
+        .severity.HIGH { background: #f57c00; }
+        .severity.MEDIUM { background: #fbc02d; }
+        .severity.LOW { background: #388e3c; }
+        
+        code { 
+            background: #2b2b2b; 
+            color: #f8f8f8; 
+            padding: 10px; 
+            display: block; 
+            border-radius: 3px; 
+            overflow-x: auto; 
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre;
+        }
+        
+        .info { 
+            background: #e8f5e9; 
+            border: 1px solid #c8e6c9; 
+            padding: 10px; 
+            border-radius: 3px; 
+            margin: 10px 0; 
+        }
+        
+        .location { 
+            color: #666; 
             font-size: 0.9em; 
-            margin-top: 10px;
+        }
+        
+        h3 { 
+            margin-top: 0; 
+        }
+        
+        .filter-info {
+            text-align: center;
+            color: #666;
+            margin: 10px 0;
             font-style: italic;
         }
-        .results-count {
-            text-align: center;
-            padding: 15px;
-            background: #3498db;
-            color: white;
-            border-radius: 5px;
-            margin: 20px 0;
-            font-size: 1.1em;
-            font-weight: bold;
-        }
+        
         .pagination {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 30px 0;
-            padding: 20px;
-            background: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            margin: 20px 0;
         }
-        .pagination-info {
-            font-size: 1.1em;
-            color: #2c3e50;
-            font-weight: bold;
-        }
-        .pagination-buttons {
-            display: flex;
-            gap: 5px;
-            align-items: center;
-        }
+        
         .page-btn {
-            padding: 8px 15px;
-            border: 1px solid #3498db;
+            padding: 8px 12px;
+            margin: 0 5px;
+            border: 1px solid #ccc;
             background: white;
-            color: #3498db;
-            border-radius: 5px;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            border-radius: 3px;
         }
+        
         .page-btn:hover {
-            background: #3498db;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            background: #e0e0e0;
         }
+        
         .page-btn.active {
-            background: #3498db;
+            background: #0066cc;
             color: white;
-            font-weight: bold;
-        }
-        .page-ellipsis {
-            padding: 0 5px;
-            color: #7f8c8d;
-        }
-        .findings-container {
-            margin-bottom: 30px;
+            border-color: #0066cc;
         }
     </style>
     <script>
+        // Simple filtering and pagination
         let activeFilters = new Set();
         let currentPage = 1;
         const itemsPerPage = 20;
         
         function toggleFilter(severity) {
-            const stat = document.querySelector('.stat.' + severity.toLowerCase());
-            
             if (activeFilters.has(severity)) {
-                // Remove filter
                 activeFilters.delete(severity);
-                stat.classList.remove('active');
             } else {
-                // Add filter
                 activeFilters.add(severity);
-                stat.classList.add('active');
             }
             
-            currentPage = 1; // Reset to page 1 when filter changes
+            // Update button styles
+            document.querySelectorAll('.stat').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            activeFilters.forEach(sev => {
+                document.querySelector('.stat.' + sev.toLowerCase()).classList.add('active');
+            });
+            
+            currentPage = 1;
             applyFilters();
         }
         
         function applyFilters() {
             const findings = document.querySelectorAll('.finding');
-            let visibleFindings = [];
+            let visible = [];
             
-            // First pass: determine which findings match filters
             findings.forEach(finding => {
-                if (activeFilters.size === 0) {
-                    visibleFindings.push(finding);
+                const severity = finding.className.split(' ')[1];
+                
+                if (activeFilters.size === 0 || activeFilters.has(severity)) {
+                    visible.push(finding);
                 } else {
-                    let shouldShow = false;
-                    activeFilters.forEach(filter => {
-                        if (finding.classList.contains(filter)) {
-                            shouldShow = true;
-                        }
-                    });
-                    if (shouldShow) {
-                        visibleFindings.push(finding);
-                    }
+                    finding.classList.add('hidden');
                 }
             });
             
-            // Second pass: apply pagination
-            const totalPages = Math.ceil(visibleFindings.length / itemsPerPage);
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
+            // Pagination
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
             
-            findings.forEach(finding => finding.classList.add('hidden'));
-            
-            visibleFindings.forEach((finding, index) => {
-                if (index >= startIndex && index < endIndex) {
+            visible.forEach((finding, idx) => {
+                if (idx >= start && idx < end) {
                     finding.classList.remove('hidden');
                 } else {
                     finding.classList.add('hidden');
                 }
             });
             
-            updateResultsCount(visibleFindings.length, findings.length);
-            updatePagination(visibleFindings.length, totalPages);
+            updatePagination(visible.length);
         }
         
-        function changePage(newPage) {
-            currentPage = newPage;
-            applyFilters();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        
-        function updatePagination(totalVisible, totalPages) {
-            let paginationDiv = document.getElementById('pagination');
-            if (!paginationDiv) {
-                paginationDiv = document.createElement('div');
-                paginationDiv.id = 'pagination';
-                paginationDiv.className = 'pagination';
-                document.querySelector('.findings-container').appendChild(paginationDiv);
-            }
+        function updatePagination(totalVisible) {
+            const totalPages = Math.ceil(totalVisible / itemsPerPage);
+            const paginationDiv = document.getElementById('pagination');
             
-            if (totalPages <= 1) {
-                paginationDiv.style.display = 'none';
-                return;
-            }
+            let html = '';
             
-            paginationDiv.style.display = 'flex';
-            
-            let html = '<div class="pagination-info">Page ' + currentPage + ' of ' + totalPages + '</div>';
-            html += '<div class="pagination-buttons">';
-            
-            // Previous button
             if (currentPage > 1) {
-                html += '<button onclick="changePage(' + (currentPage - 1) + ')" class="page-btn">← Previous</button>';
+                html += '<button class="page-btn" onclick="changePage(' + (currentPage - 1) + ')">Previous</button>';
             }
             
-            // Page numbers
-            const maxButtons = 5;
-            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
-            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-            
-            if (endPage - startPage < maxButtons - 1) {
-                startPage = Math.max(1, endPage - maxButtons + 1);
-            }
-            
-            if (startPage > 1) {
-                html += '<button onclick="changePage(1)" class="page-btn">1</button>';
-                if (startPage > 2) html += '<span class="page-ellipsis">...</span>';
-            }
-            
-            for (let i = startPage; i <= endPage; i++) {
+            for (let i = 1; i <= totalPages; i++) {
                 if (i === currentPage) {
                     html += '<button class="page-btn active">' + i + '</button>';
                 } else {
-                    html += '<button onclick="changePage(' + i + ')" class="page-btn">' + i + '</button>';
+                    html += '<button class="page-btn" onclick="changePage(' + i + ')">' + i + '</button>';
                 }
             }
             
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) html += '<span class="page-ellipsis">...</span>';
-                html += '<button onclick="changePage(' + totalPages + ')" class="page-btn">' + totalPages + '</button>';
-            }
-            
-            // Next button
             if (currentPage < totalPages) {
-                html += '<button onclick="changePage(' + (currentPage + 1) + ')" class="page-btn">Next →</button>';
+                html += '<button class="page-btn" onclick="changePage(' + (currentPage + 1) + ')">Next</button>';
             }
             
-            html += '</div>';
             paginationDiv.innerHTML = html;
         }
         
-        function updateResultsCount(visible, total) {
-            let resultsDiv = document.getElementById('results-count');
-            if (!resultsDiv) {
-                resultsDiv = document.createElement('div');
-                resultsDiv.id = 'results-count';
-                resultsDiv.className = 'results-count';
-                document.querySelector('.summary').after(resultsDiv);
-            }
-            
-            const totalPages = Math.ceil(visible / itemsPerPage);
-            const startItem = (currentPage - 1) * itemsPerPage + 1;
-            const endItem = Math.min(currentPage * itemsPerPage, visible);
-            
-            if (activeFilters.size === 0) {
-                if (totalPages > 1) {
-                    resultsDiv.textContent = `Showing ${startItem}-${endItem} of ${total} findings (Page ${currentPage}/${totalPages})`;
-                } else {
-                    resultsDiv.textContent = `Showing all ${total} findings`;
-                }
-                resultsDiv.style.background = '#3498db';
-            } else {
-                const filterNames = Array.from(activeFilters).join(' + ');
-                if (totalPages > 1) {
-                    resultsDiv.textContent = `Showing ${startItem}-${endItem} of ${visible} findings (${filterNames}) - Page ${currentPage}/${totalPages}`;
-                } else {
-                    resultsDiv.textContent = `Showing ${visible} of ${total} findings (${filterNames})`;
-                }
-                resultsDiv.style.background = '#2ecc71';
-            }
+        function changePage(page) {
+            currentPage = page;
+            applyFilters();
         }
         
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
+        // Run on page load
+        window.onload = function() {
             applyFilters();
-        });
+        };
     </script>
 </head>
 <body>
@@ -361,28 +291,30 @@ def generate_html_report(findings: List[Dict], output_path: str):
     
     <div class="summary">
         <div class="stat critical" onclick="toggleFilter('CRITICAL')">
-            <h3>""" + str(sum(1 for f in findings if f['severity'] == 'CRITICAL')) + """</h3>
+            <h2>""" + str(sum(1 for f in findings if f['severity'] == 'CRITICAL')) + """</h2>
             <p>Critical</p>
         </div>
         <div class="stat high" onclick="toggleFilter('HIGH')">
-            <h3>""" + str(sum(1 for f in findings if f['severity'] == 'HIGH')) + """</h3>
+            <h2>""" + str(sum(1 for f in findings if f['severity'] == 'HIGH')) + """</h2>
             <p>High</p>
         </div>
         <div class="stat medium" onclick="toggleFilter('MEDIUM')">
-            <h3>""" + str(sum(1 for f in findings if f['severity'] == 'MEDIUM')) + """</h3>
+            <h2>""" + str(sum(1 for f in findings if f['severity'] == 'MEDIUM')) + """</h2>
             <p>Medium</p>
         </div>
         <div class="stat low" onclick="toggleFilter('LOW')">
-            <h3>""" + str(sum(1 for f in findings if f['severity'] == 'LOW')) + """</h3>
+            <h2>""" + str(sum(1 for f in findings if f['severity'] == 'LOW')) + """</h2>
             <p>Low</p>
         </div>
     </div>
- 
-    <div class="findings-container">
-    <h2>Findings</h2>
+    
+    
+    <div id="pagination" class="pagination"></div>
+    
+    <div id="findings">
 """
     
-    # Show ALL findings (pagination in JavaScript)
+    # Add each finding
     for idx, finding in enumerate(findings, 1):
         llm = finding.get('llm_analysis', {})
         
@@ -390,36 +322,44 @@ def generate_html_report(findings: List[Dict], output_path: str):
     <div class="finding {finding['severity']}">
         <h3>{idx}. {finding['title']}</h3>
         <span class="severity {finding['severity']}">{finding['severity']}</span>
-        <p class="location">File: {finding['file']}:{finding['line']} | Tool: {finding['tool']}</p>
+        <p class="location">File: {finding['file']} (line {finding['line']}) | Found by: {finding['tool']}</p>
         
-        <h4>Description</h4>
+        <h4>What's wrong:</h4>
         <p>{finding['message']}</p>
         
-        <h4>Vulnerable Code</h4>
-        <code style="white-space: pre; font-family: 'Courier New', monospace; line-height: 1.5;">{get_code_context(finding['file'], finding['line'], context_lines=4)}</code>
+        <h4>Code:</h4>
+        <code>{get_code_context(finding['file'], finding['line'], context_lines=3)}</code>
 """
         
+        # Add LLM analysis if available
         if llm:
             if llm.get('impact'):
                 html += f"""
-        <h4>Impact</h4>
-        <p>{llm.get('impact', 'N/A')}</p>
-        
-        <h4>Exploitability</h4>
-        <p>{llm.get('exploitability', 'N/A')}/5</p>
+        <h4>Impact:</h4>
+        <p>{llm.get('impact', 'Unknown')}</p>
+"""
+            
+            if llm.get('exploitability'):
+                html += f"""
+        <h4>How easy to exploit:</h4>
+        <p>{llm.get('exploitability', 'Unknown')}/5</p>
 """
             
             if llm.get('remediation'):
                 html += f"""
-        <div class="remediation">
-            <h4>Remediation</h4>
-            <p>{llm.get('remediation', 'See scanner documentation')}</p>
+        <div class="info">
+            <h4>How to fix:</h4>
+            <p>{llm.get('remediation', 'See documentation')}</p>
         </div>
 """
         
         html += "    </div>\n"
     
     html += """
+    </div>
+    
+    <div id="pagination-bottom" class="pagination"></div>
+
 </body>
 </html>
 """
