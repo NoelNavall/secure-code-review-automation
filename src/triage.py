@@ -7,7 +7,7 @@ import re
 from datetime import datetime
 from typing import List, Dict
 
-from config import CRITICAL_KEYWORDS, HIGH_KEYWORDS, LLM_TIMEOUT, LLM_TRIAGE_TOP_K
+from config import CRITICAL_KEYWORDS, HIGH_KEYWORDS, LLM_TIMEOUT
 
 
 def call_llm(prompt: str) -> str:
