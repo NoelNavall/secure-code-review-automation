@@ -1,16 +1,12 @@
-#!/usr/bin/env python3
 import os
 
-# You're using LM Studio
-LLM_PROVIDER = "lmstudio"
-
-# What makes a bug CRITICAL
+# What makes a bug CRITICAL (overrides tool output)
 CRITICAL_KEYWORDS = [
     "sql injection", "command injection", "code injection",
     "xxe", "deserialization", "path traversal", "rce"
 ]
 
-# What makes a bug HIGH severity
+# What makes a bug HIGH severity (overrides tool output)
 HIGH_KEYWORDS = [
     "xss", "csrf", "authentication", "authorization",
     "hardcoded", "secret", "password", "crypto"
@@ -19,4 +15,5 @@ HIGH_KEYWORDS = [
 # Report customization
 ITEMS_PER_PAGE = 20           # Vulnerabilities per page
 CODE_CONTEXT_LINES = 1        # Lines of code to show
-SCANNER_TIMEOUT =  60        # 5 minutes max
+SCANNER_TIMEOUT =  60         # 1 minute max
+LLM_TIMEOUT = 120             # 2 minutes max

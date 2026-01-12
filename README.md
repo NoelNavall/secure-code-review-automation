@@ -87,6 +87,13 @@ python src/scanner.py --target sample
 python src/scanner.py --target sample/app.py --skip-llm
 ```
 
+### Limit AI analysis (top K findings)
+```bash
+python src/scanner.py --target sample/app.py --llm-top-k 5
+```
+- Default: 10 (only the top 10 findings are analyzed by the LLM)
+- Use -1 to analyze all findings: `--llm-top-k -1`
+
 ---
 
 ## How It Works

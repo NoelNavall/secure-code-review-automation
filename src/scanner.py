@@ -1,9 +1,7 @@
-#!/usr/bin/env python3
 """
 Main Security Scanner - Assignment 18
-Orchestrates the security scanning pipeline by coordinating all the different modules.
 
-This is the main entry point. It:
+This is the main entry point
 1. Runs Semgrep and Bandit scanners
 2. Sends findings to LLM for analysis
 3. Generates HTML and JSON reports
@@ -40,6 +38,8 @@ def main():
                        help="Directory or file to scan")
     parser.add_argument("--skip-llm", action="store_true", 
                        help="Skip LLM analysis (faster, but less detailed)")
+    parser.add_argument("--llm-top-k", type=int, default=10, metavar="N",
+                       help="Number of top results to send to LLM for triage (default: 10) (-1 = all)")
     args = parser.parse_args()
     
     # Print header
@@ -68,7 +68,7 @@ def main():
     
     # If no vulnerabilities found, we're done
     if not findings:
-        print("\n✓ No security issues found!")
+        print("\nNo security issues found!")
         return
     
     # Create output folder with timestamp
@@ -90,7 +90,7 @@ def main():
     # LLM triage (optional)
     if not args.skip_llm:
         print("\n[4/4] Analyzing with LLM...")
-        findings = triage_findings(findings, prompts_filename)
+        findings = triage_findings(findings, prompts_filename, args.llm_top_k)
     else:
         print("\n[4/4] Skipping LLM analysis (--skip-llm flag)")
     

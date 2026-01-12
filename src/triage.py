@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 LLM-powered triage and prioritization of security findings
 """
@@ -8,13 +7,38 @@ import re
 from datetime import datetime
 from typing import List, Dict
 
-from config import CRITICAL_KEYWORDS, HIGH_KEYWORDS, LLM_PROVIDER
-from llm_provider import call_llm
+from config import CRITICAL_KEYWORDS, HIGH_KEYWORDS, LLM_TIMEOUT, LLM_TRIAGE_TOP_K
 
 
-def triage_findings(findings: List[Dict], prompts_file: str = 'prompts_temp.txt') -> List[Dict]:
+def call_llm(prompt: str) -> str:
+    """
+    Call local LM Studio LLM.
+    """
+    try:
+        import requests
+        
+        response = requests.post(
+            "http://localhost:1234/v1/chat/completions",
+            json={
+                "model": "local-model",
+                "messages": [
+                    {"role": "system", "content": "You are a senior security engineer."},
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.3,
+                "max_tokens": 2000
+            },
+            timeout=LLM_TIMEOUT
+        )
+        
+        return response.json()["choices"][0]["message"]["content"]
+    
+    except Exception as e:
+        return f"Error calling LM Studio: {e}"
+
+def triage_findings(findings: List[Dict], prompts_file: str = 'prompts_temp.txt', llm_top_k: int = 10) -> List[Dict]:
     """Use LLM to prioritize and enrich findings"""
-    print(f"\nAnalyzing {len(findings)} findings with LLM ({LLM_PROVIDER})...")
+    print(f"\nAnalyzing {len(findings)} findings with LLM...")
     
     if not findings:
         return []
@@ -30,8 +54,8 @@ def triage_findings(findings: List[Dict], prompts_file: str = 'prompts_temp.txt'
     for f in high_findings:
         f['severity'] = 'HIGH'
     
-    # Get LLM analysis for top 10 most severe findings
-    top_findings = (critical_findings + high_findings + other_findings)[:10]
+    # Get LLM analysis for top most severe findings
+    top_findings = (critical_findings + high_findings + other_findings)[:llm_top_k] if llm_top_k != -1 else findings
     
     for idx, finding in enumerate(top_findings):
         print(f"   Analyzing {idx+1}/{len(top_findings)}: {finding['title']}")
