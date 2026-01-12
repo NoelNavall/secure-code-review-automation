@@ -1,6 +1,6 @@
 
 ============================================================
-Timestamp: 2026-01-12 12:45:34.618681
+Timestamp: 2026-01-12 13:25:13.661303
 Finding: hardcoded_sql_expressions
 Prompt:
 Analyze this security vulnerability:
@@ -25,10 +25,10 @@ Provide:
 Format as JSON:
 {"exploitability": 4, "impact": "...", "false_positive": "LOW", "remediation": "...", "priority": "HIGH"}
 Response:
-Error calling LM Studio: 'choices'
+{"exploitability":5,"impact":"Full compromise of user accounts and potential data exfiltration.","false_positive":"LOW","remediation":"Use parameterized queries:\nquery = \"SELECT * FROM users WHERE username=%s AND password=%s\"\ncursor.execute(query, (username,password))","priority":"CRITICAL"}
 
 ============================================================
-Timestamp: 2026-01-12 12:45:36.796638
+Timestamp: 2026-01-12 13:25:21.576666
 Finding: hardcoded_sql_expressions
 Prompt:
 Analyze this security vulnerability:
@@ -53,10 +53,10 @@ Provide:
 Format as JSON:
 {"exploitability": 4, "impact": "...", "false_positive": "LOW", "remediation": "...", "priority": "HIGH"}
 Response:
-Error calling LM Studio: 'choices'
+{"exploitability":5,"impact":"An attacker can delete arbitrary user records or all users by injecting SQL through the user_id parameter, leading to data loss and potential denial of service.","false_positive":"LOW","remediation":"cursor.execute(\"DELETE FROM users WHERE id=%s\", (user_id,))","priority":"CRITICAL"}
 
 ============================================================
-Timestamp: 2026-01-12 12:45:38.841430
+Timestamp: 2026-01-12 13:25:29.341217
 Finding: hardcoded_sql_expressions
 Prompt:
 Analyze this security vulnerability:
@@ -81,10 +81,10 @@ Provide:
 Format as JSON:
 {"exploitability": 4, "impact": "...", "false_positive": "LOW", "remediation": "...", "priority": "HIGH"}
 Response:
-Error calling LM Studio: 'choices'
+{"exploitability":5,"impact":"Full database compromise: attacker can inject arbitrary SQL, read/write/delete data, exfiltrate sensitive information, and potentially gain administrative control over the system.","false_positive":"LOW","remediation":"```python\nhashed_pw = hash_password(password)\ncursor.execute(\"INSERT INTO users (username, password) VALUES (%s, %s)\", (username, hashed_pw))\n```","priority":"CRITICAL"}
 
 ============================================================
-Timestamp: 2026-01-12 12:45:40.879261
+Timestamp: 2026-01-12 13:25:38.328603
 Finding: blacklist
 Prompt:
 Analyze this security vulnerability:
@@ -109,10 +109,10 @@ Provide:
 Format as JSON:
 {"exploitability": 4, "impact": "...", "false_positive": "LOW", "remediation": "...", "priority": "HIGH"}
 Response:
-Error calling LM Studio: 'choices'
+{"exploitability":4,"impact":"Use of deprecated DES exposes encrypted data to known vulnerabilities and weak key management, potentially allowing attackers to decrypt or forge ciphertexts, leading to confidentiality and integrity breaches.","false_positive":"LOW","remediation":"from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes\nkey = b'16bytekey123456'\ncipher = Cipher(algorithms.AES(key), modes.ECB())\nenc = cipher.encryptor()","priority":"HIGH"}
 
 ============================================================
-Timestamp: 2026-01-12 12:45:42.933370
+Timestamp: 2026-01-12 13:25:50.741678
 Finding: blacklist
 Prompt:
 Analyze this security vulnerability:
@@ -137,10 +137,10 @@ Provide:
 Format as JSON:
 {"exploitability": 4, "impact": "...", "false_positive": "LOW", "remediation": "...", "priority": "HIGH"}
 Response:
-Error calling LM Studio: 'choices'
+{"exploitability":"4","impact":"Data confidentiality loss due to weak DES encryption, enabling attackers to decrypt sensitive information and potentially inject malicious data.","false_positive":"LOW","remediation":"from Crypto.Cipher import AES\nkey = hashlib.sha256(b'secret_passphrase').digest()[:32]\ncipher = AES.new(key, AES.MODE_ECB)","priority":"CRITICAL"}
 
 ============================================================
-Timestamp: 2026-01-12 12:45:44.980496
+Timestamp: 2026-01-12 13:25:59.384127
 Finding: subprocess_popen_with_shell_equals_true
 Prompt:
 Analyze this security vulnerability:
@@ -165,10 +165,10 @@ Provide:
 Format as JSON:
 {"exploitability": 4, "impact": "...", "false_positive": "LOW", "remediation": "...", "priority": "HIGH"}
 Response:
-Error calling LM Studio: 'choices'
+{"exploitability":"5","impact":"An attacker can inject arbitrary shell commands via the 'host' parameter, potentially leading to remote code execution and full system compromise.","false_positive":"LOW","remediation":"Use subprocess.check_output(['ping','-c','1', host]) without shell=True. Ensure 'host' is validated or sanitized before use.","priority":"CRITICAL"}
 
 ============================================================
-Timestamp: 2026-01-12 12:45:47.015436
+Timestamp: 2026-01-12 13:26:08.143818
 Finding: blacklist
 Prompt:
 Analyze this security vulnerability:
@@ -193,10 +193,10 @@ Provide:
 Format as JSON:
 {"exploitability": 4, "impact": "...", "false_positive": "LOW", "remediation": "...", "priority": "HIGH"}
 Response:
-Error calling LM Studio: 'choices'
+{"exploitability":5,"impact":"Arbitrary code execution leading to full system compromise, data theft, or denial of service.","false_positive":"LOW","remediation":"import json\nobj = json.loads(data)  # Use safe JSON deserialization instead of pickle","priority":"CRITICAL"}
 
 ============================================================
-Timestamp: 2026-01-12 12:45:49.059796
+Timestamp: 2026-01-12 13:26:21.487926
 Finding: hashlib
 Prompt:
 Analyze this security vulnerability:
@@ -221,10 +221,10 @@ Provide:
 Format as JSON:
 {"exploitability": 4, "impact": "...", "false_positive": "LOW", "remediation": "...", "priority": "HIGH"}
 Response:
-Error calling LM Studio: 'choices'
+{"exploitability":4,"impact":"An attacker can generate hash collisions or preimage attacks, enabling credential forgery, tampering of data integrity checks, or bypassing authentication mechanisms that rely on this MD5 hash.","false_positive":"LOW","remediation":"Replace with a stronger hash: \nhashed = hashlib.sha256(data.encode()).hexdigest()  # Use SHA-256 for security\n# Or use bcrypt/scrypt for password hashing if applicable","priority":"HIGH"}
 
 ============================================================
-Timestamp: 2026-01-12 12:45:51.114637
+Timestamp: 2026-01-12 13:26:32.347400
 Finding: request_without_timeout
 Prompt:
 Analyze this security vulnerability:
@@ -249,10 +249,10 @@ Provide:
 Format as JSON:
 {"exploitability": 4, "impact": "...", "false_positive": "LOW", "remediation": "...", "priority": "HIGH"}
 Response:
-Error calling LM Studio: 'choices'
+{"exploitability":"4","impact":"An attacker could exploit the lack of timeout and URL validation to perform Server-Side Request Forgery (SSRF), potentially accessing internal resources, exfiltrating data, or causing denial-of-service by hanging requests.","false_positive":"LOW","remediation":"response = requests.get(url, timeout=5)  # Add reasonable timeout\n# Validate the URL against a whitelist of allowed domains before calling\nif not is_allowed_url(url): raise ValueError('Disallowed URL')","priority":"HIGH"}
 
 ============================================================
-Timestamp: 2026-01-12 12:45:53.162196
+Timestamp: 2026-01-12 13:26:42.652405
 Finding: blacklist
 Prompt:
 Analyze this security vulnerability:
@@ -277,4 +277,4 @@ Provide:
 Format as JSON:
 {"exploitability": 4, "impact": "...", "false_positive": "LOW", "remediation": "...", "priority": "HIGH"}
 Response:
-Error calling LM Studio: 'choices'
+{"exploitability":"4","impact":"An attacker could trigger XML External Entity (XXE) attacks, leading to arbitrary file disclosure, server-side request forgery, or denial of service on the host system.","false_positive":"LOW","remediation":"from defusedxml import ElementTree as ET\nET.defuse_stdlib()\n# then use ET.fromstring(xml_data)","priority":"HIGH"}

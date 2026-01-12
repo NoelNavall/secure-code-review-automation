@@ -8,6 +8,34 @@ from datetime import datetime
 from typing import List, Dict
 
 
+# Basic remediation guidance when LLM is not available
+BASIC_REMEDIATION = {
+    "sql": "Use parameterized queries: cursor.execute('SELECT * FROM users WHERE id=?', (user_id,))",
+    "command injection": "Use subprocess with list arguments instead of shell=True: subprocess.run(['ping', '-c', '1', host])",
+    "hardcoded": "Store secrets in environment variables or a secrets manager, not in code",
+    "xss": "Use proper HTML escaping: from markupsafe import escape; return escape(user_input)",
+    "pickle": "Use JSON instead of pickle for untrusted data, or implement signature verification",
+    "md5": "Use SHA-256 or stronger: hashlib.sha256(data.encode()).hexdigest()",
+    "des": "Use AES encryption from cryptography library: from cryptography.fernet import Fernet",
+    "yaml.load": "Use yaml.safe_load() instead of yaml.load() to prevent code execution",
+    "eval": "Never use eval() on user input. Use ast.literal_eval() for safe evaluation",
+    "assert": "Don't use assert for security checks. Use proper if/raise statements",
+    "xxe": "Use defusedxml library or disable external entity processing",
+    "timeout": "Add timeout parameter: requests.get(url, timeout=5)",
+}
+
+def get_basic_remediation(finding: Dict) -> str:
+    """Get basic remediation advice based on vulnerability type"""
+    message = finding.get('message', '').lower()
+    title = finding.get('title', '').lower()
+    
+    for keyword, advice in BASIC_REMEDIATION.items():
+        if keyword in message or keyword in title:
+            return advice
+    
+    return "Review the code and apply security best practices for this vulnerability type"
+
+
 def get_code_context(filepath: str, line_number: int, context_lines: int = 5) -> str:
     """
     Get code around the vulnerable line so you can see what's happening
@@ -151,6 +179,14 @@ def generate_html_report(findings: List[Dict], output_path: str):
             padding: 10px; 
             border-radius: 3px; 
             margin: 10px 0; 
+        }
+        
+        .warning {
+            background: #fff3e0;
+            border: 1px solid #ffb74d;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
         }
         
         .location { 
@@ -317,6 +353,7 @@ def generate_html_report(findings: List[Dict], output_path: str):
     # Add each finding
     for idx, finding in enumerate(findings, 1):
         llm = finding.get('llm_analysis', {})
+        has_llm_data = llm and not llm.get('error') and not llm.get('raw_response')
         
         html += f"""
     <div class="finding {finding['severity']}">
@@ -332,7 +369,7 @@ def generate_html_report(findings: List[Dict], output_path: str):
 """
         
         # Add LLM analysis if available
-        if llm:
+        if has_llm_data:
             if llm.get('impact'):
                 html += f"""
         <h4>Impact:</h4>
@@ -348,8 +385,18 @@ def generate_html_report(findings: List[Dict], output_path: str):
             if llm.get('remediation'):
                 html += f"""
         <div class="info">
-            <h4>How to fix:</h4>
+            <h4>How to fix (AI-generated):</h4>
             <p>{llm.get('remediation', 'See documentation')}</p>
+        </div>
+"""
+        else:
+            # Fallback: show basic remediation when LLM not available
+            basic_fix = get_basic_remediation(finding)
+            html += f"""
+        <div class="warning">
+            <h4>How to fix (basic guidance):</h4>
+            <p>{basic_fix}</p>
+            <small><em>Note: LLM analysis not available. Run with --llm-top-k for detailed AI-powered remediation.</em></small>
         </div>
 """
         

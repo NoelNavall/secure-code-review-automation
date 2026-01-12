@@ -85,6 +85,14 @@
             margin: 10px 0; 
         }
         
+        .warning {
+            background: #fff3e0;
+            border: 1px solid #ffb74d;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+        }
+        
         .location { 
             color: #666; 
             font-size: 0.9em; 
@@ -218,12 +226,12 @@
 <body>
     <div class="header">
         <h1>Security Scan Report</h1>
-        <p>Generated: 2026-01-12 12:45:55</p>
+        <p>Generated: 2026-01-12 13:26:51</p>
     </div>
     
     <div class="summary">
         <div class="stat critical" onclick="toggleFilter('CRITICAL')">
-            <h2>3</h2>
+            <h2>6</h2>
             <p>Critical</p>
         </div>
         <div class="stat high" onclick="toggleFilter('HIGH')">
@@ -231,7 +239,7 @@
             <p>High</p>
         </div>
         <div class="stat medium" onclick="toggleFilter('MEDIUM')">
-            <h2>8</h2>
+            <h2>5</h2>
             <p>Medium</p>
         </div>
         <div class="stat low" onclick="toggleFilter('LOW')">
@@ -261,10 +269,82 @@
       28      cursor.execute(query)  # BUG: Direct string interpolation
       29      user = cursor.fetchone()
       30  </code>
+
+        <h4>Impact:</h4>
+        <p>Full compromise of user accounts and potential data exfiltration.</p>
+
+        <h4>How easy to exploit:</h4>
+        <p>5/5</p>
+
+        <div class="info">
+            <h4>How to fix (AI-generated):</h4>
+            <p>Use parameterized queries:
+query = "SELECT * FROM users WHERE username=%s AND password=%s"
+cursor.execute(query, (username,password))</p>
+        </div>
     </div>
 
     <div class="finding CRITICAL">
-        <h3>2. hardcoded_sql_expressions</h3>
+        <h3>2. subprocess_popen_with_shell_equals_true</h3>
+        <span class="severity CRITICAL">CRITICAL</span>
+        <p class="location">File: .\sample\app.py (line 41) | Found by: bandit</p>
+        
+        <h4>What's wrong:</h4>
+        <p>subprocess call with shell=True identified, security issue.</p>
+        
+        <h4>Code:</h4>
+        <code>      38      host = request.args.get('host', 'localhost')
+      39  
+      40      # Vulnerable to command injection
+>>>   41      result = subprocess.check_output(f"ping -c 1 {host}", shell=True)  # BUG: shell=True with user input  ← BUG HERE
+      42      return result
+      43  
+      44  # VULNERABILITY: Path Traversal</code>
+
+        <h4>Impact:</h4>
+        <p>An attacker can inject arbitrary shell commands via the 'host' parameter, potentially leading to remote code execution and full system compromise.</p>
+
+        <h4>How easy to exploit:</h4>
+        <p>5/5</p>
+
+        <div class="info">
+            <h4>How to fix (AI-generated):</h4>
+            <p>Use subprocess.check_output(['ping','-c','1', host]) without shell=True. Ensure 'host' is validated or sanitized before use.</p>
+        </div>
+    </div>
+
+    <div class="finding CRITICAL">
+        <h3>3. blacklist</h3>
+        <span class="severity CRITICAL">CRITICAL</span>
+        <p class="location">File: .\sample\app.py (line 68) | Found by: bandit</p>
+        
+        <h4>What's wrong:</h4>
+        <p>Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue.</p>
+        
+        <h4>Code:</h4>
+        <code>      65      data = request.data
+      66  
+      67      # Vulnerable to insecure deserialization
+>>>   68      obj = pickle.loads(data)  # BUG: Unpickling untrusted data  ← BUG HERE
+      69      return str(obj)
+      70  
+      71  # VULNERABILITY: Weak Cryptography</code>
+
+        <h4>Impact:</h4>
+        <p>Arbitrary code execution leading to full system compromise, data theft, or denial of service.</p>
+
+        <h4>How easy to exploit:</h4>
+        <p>5/5</p>
+
+        <div class="info">
+            <h4>How to fix (AI-generated):</h4>
+            <p>import json
+obj = json.loads(data)  # Use safe JSON deserialization instead of pickle</p>
+        </div>
+    </div>
+
+    <div class="finding CRITICAL">
+        <h3>4. hardcoded_sql_expressions</h3>
         <span class="severity CRITICAL">CRITICAL</span>
         <p class="location">File: .\sample\app.py (line 89) | Found by: bandit</p>
         
@@ -279,10 +359,21 @@
       90      conn.commit()
       91  
       92      return "User deleted"</code>
+
+        <h4>Impact:</h4>
+        <p>An attacker can delete arbitrary user records or all users by injecting SQL through the user_id parameter, leading to data loss and potential denial of service.</p>
+
+        <h4>How easy to exploit:</h4>
+        <p>5/5</p>
+
+        <div class="info">
+            <h4>How to fix (AI-generated):</h4>
+            <p>cursor.execute("DELETE FROM users WHERE id=%s", (user_id,))</p>
+        </div>
     </div>
 
     <div class="finding CRITICAL">
-        <h3>3. hardcoded_sql_expressions</h3>
+        <h3>5. hardcoded_sql_expressions</h3>
         <span class="severity CRITICAL">CRITICAL</span>
         <p class="location">File: .\sample\app.py (line 126) | Found by: bandit</p>
         
@@ -297,28 +388,55 @@
      127      conn.commit()
      128  
      129  # VULNERABILITY: Race Condition</code>
+
+        <h4>Impact:</h4>
+        <p>Full database compromise: attacker can inject arbitrary SQL, read/write/delete data, exfiltrate sensitive information, and potentially gain administrative control over the system.</p>
+
+        <h4>How easy to exploit:</h4>
+        <p>5/5</p>
+
+        <div class="info">
+            <h4>How to fix (AI-generated):</h4>
+            <p>```python
+hashed_pw = hash_password(password)
+cursor.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed_pw))
+```</p>
+        </div>
     </div>
 
-    <div class="finding HIGH">
-        <h3>4. subprocess_popen_with_shell_equals_true</h3>
-        <span class="severity HIGH">HIGH</span>
-        <p class="location">File: .\sample\app.py (line 41) | Found by: bandit</p>
+    <div class="finding CRITICAL">
+        <h3>6. blacklist</h3>
+        <span class="severity CRITICAL">CRITICAL</span>
+        <p class="location">File: .\sample\utils.py (line 128) | Found by: bandit</p>
         
         <h4>What's wrong:</h4>
-        <p>subprocess call with shell=True identified, security issue.</p>
+        <p>Use of insecure cipher Crypto.Cipher.DES.new. Replace with a known secure cipher such as AES.</p>
         
         <h4>Code:</h4>
-        <code>      38      host = request.args.get('host', 'localhost')
-      39  
-      40      # Vulnerable to command injection
->>>   41      result = subprocess.check_output(f"ping -c 1 {host}", shell=True)  # BUG: shell=True with user input  ← BUG HERE
-      42      return result
-      43  
-      44  # VULNERABILITY: Path Traversal</code>
+        <code>     125  def encrypt_data(data):
+     126      from Crypto.Cipher import DES  # BUG: DES is deprecated
+     127      key = b'8bytekey'
+>>>  128      cipher = DES.new(key, DES.MODE_ECB)  ← BUG HERE
+     129      return cipher.encrypt(data)
+     130  
+     131  # VULNERABILITY: No CSRF protection</code>
+
+        <h4>Impact:</h4>
+        <p>Data confidentiality loss due to weak DES encryption, enabling attackers to decrypt sensitive information and potentially inject malicious data.</p>
+
+        <h4>How easy to exploit:</h4>
+        <p>4/5</p>
+
+        <div class="info">
+            <h4>How to fix (AI-generated):</h4>
+            <p>from Crypto.Cipher import AES
+key = hashlib.sha256(b'secret_passphrase').digest()[:32]
+cipher = AES.new(key, AES.MODE_ECB)</p>
+        </div>
     </div>
 
     <div class="finding HIGH">
-        <h3>5. hashlib</h3>
+        <h3>7. hashlib</h3>
         <span class="severity HIGH">HIGH</span>
         <p class="location">File: .\sample\app.py (line 78) | Found by: bandit</p>
         
@@ -333,10 +451,85 @@
       79      return hashed
       80  
       81  # VULNERABILITY: Missing Authentication</code>
+
+        <h4>Impact:</h4>
+        <p>An attacker can generate hash collisions or preimage attacks, enabling credential forgery, tampering of data integrity checks, or bypassing authentication mechanisms that rely on this MD5 hash.</p>
+
+        <h4>How easy to exploit:</h4>
+        <p>4/5</p>
+
+        <div class="info">
+            <h4>How to fix (AI-generated):</h4>
+            <p>Replace with a stronger hash: 
+hashed = hashlib.sha256(data.encode()).hexdigest()  # Use SHA-256 for security
+# Or use bcrypt/scrypt for password hashing if applicable</p>
+        </div>
     </div>
 
     <div class="finding HIGH">
-        <h3>6. flask_debug_true</h3>
+        <h3>8. request_without_timeout</h3>
+        <span class="severity HIGH">HIGH</span>
+        <p class="location">File: .\sample\app.py (line 101) | Found by: bandit</p>
+        
+        <h4>What's wrong:</h4>
+        <p>Call to requests without timeout</p>
+        
+        <h4>Code:</h4>
+        <code>      98      url = request.args.get('url')
+      99  
+     100      # Vulnerable to SSRF
+>>>  101      response = requests.get(url)  # BUG: No URL validation  ← BUG HERE
+     102      return response.text
+     103  
+     104  # VULNERABILITY: Information Disclosure</code>
+
+        <h4>Impact:</h4>
+        <p>An attacker could exploit the lack of timeout and URL validation to perform Server-Side Request Forgery (SSRF), potentially accessing internal resources, exfiltrating data, or causing denial-of-service by hanging requests.</p>
+
+        <h4>How easy to exploit:</h4>
+        <p>4/5</p>
+
+        <div class="info">
+            <h4>How to fix (AI-generated):</h4>
+            <p>response = requests.get(url, timeout=5)  # Add reasonable timeout
+# Validate the URL against a whitelist of allowed domains before calling
+if not is_allowed_url(url): raise ValueError('Disallowed URL')</p>
+        </div>
+    </div>
+
+    <div class="finding HIGH">
+        <h3>9. blacklist</h3>
+        <span class="severity HIGH">HIGH</span>
+        <p class="location">File: .\sample\app.py (line 151) | Found by: bandit</p>
+        
+        <h4>What's wrong:</h4>
+        <p>Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called</p>
+        
+        <h4>Code:</h4>
+        <code>     148      xml_data = request.data
+     149  
+     150      # Vulnerable to XXE
+>>>  151      tree = ET.fromstring(xml_data)  # BUG: No XXE protection  ← BUG HERE
+     152      return tree.text
+     153  
+     154  if __name__ == '__main__':</code>
+
+        <h4>Impact:</h4>
+        <p>An attacker could trigger XML External Entity (XXE) attacks, leading to arbitrary file disclosure, server-side request forgery, or denial of service on the host system.</p>
+
+        <h4>How easy to exploit:</h4>
+        <p>4/5</p>
+
+        <div class="info">
+            <h4>How to fix (AI-generated):</h4>
+            <p>from defusedxml import ElementTree as ET
+ET.defuse_stdlib()
+# then use ET.fromstring(xml_data)</p>
+        </div>
+    </div>
+
+    <div class="finding HIGH">
+        <h3>10. flask_debug_true</h3>
         <span class="severity HIGH">HIGH</span>
         <p class="location">File: .\sample\app.py (line 156) | Found by: bandit</p>
         
@@ -348,10 +541,16 @@
      154  if __name__ == '__main__':
      155      # VULNERABILITY: Debug mode in production
 >>>  156      app.run(debug=True, host='0.0.0.0')  # BUG: debug=True exposes stack traces  ← BUG HERE</code>
+
+        <div class="warning">
+            <h4>How to fix (basic guidance):</h4>
+            <p>Review the code and apply security best practices for this vulnerability type</p>
+            <small><em>Note: LLM analysis not available. Run with --llm-top-k for detailed AI-powered remediation.</em></small>
+        </div>
     </div>
 
     <div class="finding HIGH">
-        <h3>7. blacklist</h3>
+        <h3>11. blacklist</h3>
         <span class="severity HIGH">HIGH</span>
         <p class="location">File: .\sample\utils.py (line 126) | Found by: bandit</p>
         
@@ -366,78 +565,20 @@
      127      key = b'8bytekey'
      128      cipher = DES.new(key, DES.MODE_ECB)
      129      return cipher.encrypt(data)</code>
-    </div>
 
-    <div class="finding HIGH">
-        <h3>8. blacklist</h3>
-        <span class="severity HIGH">HIGH</span>
-        <p class="location">File: .\sample\utils.py (line 128) | Found by: bandit</p>
-        
-        <h4>What's wrong:</h4>
-        <p>Use of insecure cipher Crypto.Cipher.DES.new. Replace with a known secure cipher such as AES.</p>
-        
-        <h4>Code:</h4>
-        <code>     125  def encrypt_data(data):
-     126      from Crypto.Cipher import DES  # BUG: DES is deprecated
-     127      key = b'8bytekey'
->>>  128      cipher = DES.new(key, DES.MODE_ECB)  ← BUG HERE
-     129      return cipher.encrypt(data)
-     130  
-     131  # VULNERABILITY: No CSRF protection</code>
-    </div>
+        <h4>Impact:</h4>
+        <p>Use of deprecated DES exposes encrypted data to known vulnerabilities and weak key management, potentially allowing attackers to decrypt or forge ciphertexts, leading to confidentiality and integrity breaches.</p>
 
-    <div class="finding MEDIUM">
-        <h3>9. blacklist</h3>
-        <span class="severity MEDIUM">MEDIUM</span>
-        <p class="location">File: .\sample\app.py (line 68) | Found by: bandit</p>
-        
-        <h4>What's wrong:</h4>
-        <p>Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue.</p>
-        
-        <h4>Code:</h4>
-        <code>      65      data = request.data
-      66  
-      67      # Vulnerable to insecure deserialization
->>>   68      obj = pickle.loads(data)  # BUG: Unpickling untrusted data  ← BUG HERE
-      69      return str(obj)
-      70  
-      71  # VULNERABILITY: Weak Cryptography</code>
-    </div>
+        <h4>How easy to exploit:</h4>
+        <p>4/5</p>
 
-    <div class="finding MEDIUM">
-        <h3>10. request_without_timeout</h3>
-        <span class="severity MEDIUM">MEDIUM</span>
-        <p class="location">File: .\sample\app.py (line 101) | Found by: bandit</p>
-        
-        <h4>What's wrong:</h4>
-        <p>Call to requests without timeout</p>
-        
-        <h4>Code:</h4>
-        <code>      98      url = request.args.get('url')
-      99  
-     100      # Vulnerable to SSRF
->>>  101      response = requests.get(url)  # BUG: No URL validation  ← BUG HERE
-     102      return response.text
-     103  
-     104  # VULNERABILITY: Information Disclosure</code>
-    </div>
-
-    <div class="finding MEDIUM">
-        <h3>11. blacklist</h3>
-        <span class="severity MEDIUM">MEDIUM</span>
-        <p class="location">File: .\sample\app.py (line 151) | Found by: bandit</p>
-        
-        <h4>What's wrong:</h4>
-        <p>Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called</p>
-        
-        <h4>Code:</h4>
-        <code>     148      xml_data = request.data
-     149  
-     150      # Vulnerable to XXE
->>>  151      tree = ET.fromstring(xml_data)  # BUG: No XXE protection  ← BUG HERE
-     152      return tree.text
-     153  
-     154  if __name__ == '__main__':</code>
+        <div class="info">
+            <h4>How to fix (AI-generated):</h4>
+            <p>from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+key = b'16bytekey123456'
+cipher = Cipher(algorithms.AES(key), modes.ECB())
+enc = cipher.encryptor()</p>
+        </div>
     </div>
 
     <div class="finding MEDIUM">
@@ -453,6 +594,12 @@
      154  if __name__ == '__main__':
      155      # VULNERABILITY: Debug mode in production
 >>>  156      app.run(debug=True, host='0.0.0.0')  # BUG: debug=True exposes stack traces  ← BUG HERE</code>
+
+        <div class="warning">
+            <h4>How to fix (basic guidance):</h4>
+            <p>Store secrets in environment variables or a secrets manager, not in code</p>
+            <small><em>Note: LLM analysis not available. Run with --llm-top-k for detailed AI-powered remediation.</em></small>
+        </div>
     </div>
 
     <div class="finding MEDIUM">
@@ -471,6 +618,12 @@
       30      with open(filename, 'w') as f:
       31          f.write(content)
       32      return filename</code>
+
+        <div class="warning">
+            <h4>How to fix (basic guidance):</h4>
+            <p>Store secrets in environment variables or a secrets manager, not in code</p>
+            <small><em>Note: LLM analysis not available. Run with --llm-top-k for detailed AI-powered remediation.</em></small>
+        </div>
     </div>
 
     <div class="finding MEDIUM">
@@ -489,6 +642,12 @@
       38      return config
       39  
       40  # VULNERABILITY: Eval usage</code>
+
+        <div class="warning">
+            <h4>How to fix (basic guidance):</h4>
+            <p>Review the code and apply security best practices for this vulnerability type</p>
+            <small><em>Note: LLM analysis not available. Run with --llm-top-k for detailed AI-powered remediation.</em></small>
+        </div>
     </div>
 
     <div class="finding MEDIUM">
@@ -507,6 +666,12 @@
       44      return result
       45  
       46  # VULNERABILITY: Timing attack</code>
+
+        <div class="warning">
+            <h4>How to fix (basic guidance):</h4>
+            <p>Never use eval() on user input. Use ast.literal_eval() for safe evaluation</p>
+            <small><em>Note: LLM analysis not available. Run with --llm-top-k for detailed AI-powered remediation.</em></small>
+        </div>
     </div>
 
     <div class="finding MEDIUM">
@@ -525,6 +690,12 @@
       93      return response.json()
       94  
       95  # VULNERABILITY: No input validation</code>
+
+        <div class="warning">
+            <h4>How to fix (basic guidance):</h4>
+            <p>Add timeout parameter: requests.get(url, timeout=5)</p>
+            <small><em>Note: LLM analysis not available. Run with --llm-top-k for detailed AI-powered remediation.</em></small>
+        </div>
     </div>
 
     </div>
