@@ -26,7 +26,6 @@ secure-code-review-automation/
 │   ├── scanner.py              # Main file - runs everything
 │   ├── scanners.py             # Semgrep & Bandit integration
 │   ├── config.py               # Settings
-│   ├── llm_provider.py         # LM Studio connection
 │   ├── triage.py               # AI bug analysis
 │   └── report_generator.py     # Creates HTML report
 │
